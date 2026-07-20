@@ -7,6 +7,129 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [2.0.0] - 2026-07-19
+
+Refonte de fond en comble sur trois fronts (design, backend, outillage), à
+périmètre fonctionnel constant : mêmes URLs, mêmes routes, même contrat
+`/health`, même setup Docker.
+
+### Design éditorial
+
+- **Couche de tokens CSS** : `style.css` réécrit autour de custom properties
+  (`:root` / `.dark`). Le thème sombre ne redéfinit que les variables — fin des
+  dizaines de règles `.dark .composant` dupliquées et des littéraux magiques.
+- **Identité utilitaire** : police display **Fraunces** (variable, OFL)
+  self-hébergée (`app/static/vendor/fonts/`) réservée aux titres identitaires,
+  typographie d'interface sans-serif, filets nets et aplats. L'accueil associe
+  une couverture éditoriale asymétrique à un établi continu de cinq ateliers et
+  un répertoire direct des treize essentiels, sans grille de cartes flottantes.
+- **Logo d'origine conservé** : le symbole historique reste l'élément de marque
+  principal ; la refonte du shell ne le remplace pas.
+- **Bug wordmark corrigé** : « Toolbox Everything » n'est plus blanc-sur-blanc en
+  thème clair (encre + accent, lisible dans les deux thèmes).
+- **Palette du logo retrouvée** : fusion des deux bleus « primaires » historiques
+  en un accent fonctionnel unique, puis réemploi mesuré du bleu, du rose et de
+  leur violet intermédiaire comme repères de familles. Pas d'arc-en-ciel par outil
+  ni d'aplats décoratifs : la couleur facilite l'orientation et les interactions.
+- **Voix et motif de marque** : microcopie de l'accueil directe, signature « Tout
+  sous la main » et petits losanges dérivés du symbole historique. Les compartiments
+  colorés restent plats, jointifs et sans appels à l'action répétés.
+- **Toasts unifiés** : une seule implémentation (`main.js`, composant `.toast`) au
+  lieu de trois. Le script inline de la page média est extrait vers `media.js`.
+- **Pages d'erreur** : 400/404/405/429/500 alignées sur le design system.
+- **Navigation simplifiée** : fin de la capsule de navigation et de l'onglet actif
+  en aplat ; état courant signalé par un filet d'accent.
+- **Contenu recentré sur l'usage** : suppression du bloc marketing générique
+  « Pourquoi utiliser nos outils ? » sur les six pages principales.
+- **PDF et Speedtest peaufinés** : en-tête de service commun, statut joignable
+  annoncé en texte, chargement d'iframe maîtrisé, ouverture externe explicite et
+  véritable panneau d'exploitation lorsque Stirling PDF ou LibreSpeed est arrêté
+  (capacités, procédure guidée et commande dédiée).
+- **Breakpoints unifiés** et macro Jinja `home_tool` (`_macros.html`) pour l'accueil.
+
+### Backend (consolidation, iso-fonctionnel)
+
+- **Code mort supprimé** : `app/services/common/utils.py`, `media_converter/
+  task_manager.py`, la classe `ResourceManager` et `app/core/exceptions.py`
+  (hiérarchie jamais levée), plus `mediaConverter.js` / `mediaManager.js`.
+- **Système d'erreurs unique** : la factory gère `HTTPException`/`Exception` ; la
+  détection JSON passe par un marqueur `@json_endpoint` porté par les vues (fin de
+  la liste de préfixes d'URL en dur).
+- **Source unique** : un seul sanitizer (`app/core/files.py`), les limites d'upload
+  dérivent de `config.Config`, FFmpeg résolu une seule fois (`app.config`).
+- **pdf_tools / speedtest** : logique iframe factorisée dans `app/services/_embedded.py`.
+- **Corrections** : `/downloader/download` valide la requête (400) avant la
+  capacité FFmpeg (500) ; `quality` non numérique renvoie 400 (au lieu de 500) ;
+  message de timeout FFmpeg corrigé (180 s, plus « 10 minutes ») ; double
+  `from_object` de config supprimé ; prints diagnostics ASCII-safe (console Windows).
+- **Conversion média allégée** : les images simples sont traitées directement
+  en mémoire, sans aller-retour disque ; les ZIP de batch basculent sur disque
+  au-delà de 16 Mio, avec extensions et noms de fichiers normalisés.
+- **Démarrage simplifié** : `python run.py` ne construit plus deux applications
+  Flask et les chemins/limites d'une configuration personnalisée ne sont plus
+  écrasés par les valeurs par défaut.
+
+### Outillage, CI, tests
+
+- **`pyproject.toml`** : config centralisée **ruff** (lint + imports) + **black** +
+  **pytest** + **coverage**, longueur de ligne unique (100). `.flake8` et
+  `pytest.ini` supprimés. `isort==7.1.0` fantôme retiré de `requirements-dev`.
+- **CI** : build Tailwind avant les tests, `ruff` + `black --check` (versions
+  alignées CI/dev), couverture activée.
+- **Dépendances actualisées** : neuf paquets Python montés sur leurs dernières
+  versions stables (dont redis-py 8, Pillow 12.3, yt-dlp 2026.7 et gunicorn 26),
+  `qrcode-generator` 2.0.4 avec nouveau SRI, Font Awesome 7.3.1, Redis 8.8.0 et
+  actions GitHub à jour.
+- **Tailwind 4.3** : migration du pipeline standalone vers la configuration CSS
+  v4 (`@config`, `@source`) et ajout d'un marqueur de version pour retélécharger
+  automatiquement le bon binaire lors d'un bump (4.3.3).
+- **Tags GHCR immuables** : les tags de version `X.Y.Z` / `X.Y` ne sont republiés
+  que lors d'un vrai bump de `VERSION` (ou sur tag Git) ; le cron nocturne et les
+  commits sans bump ne réécrivent plus que `latest`.
+- **Tests** : 111 au total (couverture ajoutée sur `/media/convert` & `/batch`, la
+  branche configurée PDF/speedtest, HSTS, le sanitizer). `.gitignore` durci contre
+  les `*.pyc.<pid>` orphelins.
+- **CSS nettoyé** : fusion des trois générations successives de l'accueil et des
+  deux variantes des pages de service ; `style.css` passe de 72 à 62 Kio sans
+  modifier le rendu desktop/mobile.
+
+### Versioning, publication & Docker
+
+- **Source de version unique** : `VERSION` est la seule source applicative ;
+  `APP_VERSION` est retiré de `.env`, `env.example`, `compose.yml` et du runtime
+  Docker.
+- **Publication GHCR** : les exemples de production et le `compose.yml` pointent
+  sur `ghcr.io/doalou/toolbox_everything`. Workflow Docker unifié (suppression du
+  doublon `.github/workflows/docker-image.yml`) et signature cosign retirée (fin
+  des artefacts parasites `sha256-...sig`).
+- **Contrôle release** : le workflow refuse un tag Git `vX.Y.Z` qui ne correspond
+  pas au contenu de `VERSION` ; le workflow `Release tag` crée automatiquement
+  `vX.Y.Z` sur `main`.
+- **Makefile & Python 3.12** : `docker-build` lit `VERSION` (image locale + GHCR) ;
+  ajout de `.python-version`, plus de `python3` hardcodé.
+- **Image Docker réduite** : contexte de copie ciblé, suppression des compilateurs,
+  de `curl`, des upgrades APT au build et de la clé secrète figée dans une couche.
+- **Stirling PDF amnésique** : image 2.14.2 verrouillée, aucun volume Docker et
+  tous les emplacements pouvant contenir des données (`/configs`, `/logs`,
+  `/customFiles`, profil utilisateur, `/pipeline`, `/storage`, `/tmp`) montés en
+  RAM. Le stockage, le partage, les comptes, l'audit et la télémétrie restent
+  désactivés.
+
+### Interface (socle consolidé)
+
+- **Shell JavaScript extrait** : thème et navigation mobile déplacés du template
+  `base.html` vers `shell.js`, chargé localement avec `defer`.
+- **Assets versionnés** : CSS, JavaScript et logo reçoivent une empreinte de contenu
+  en query string pour éviter le mélange entre un HTML neuf et des assets en cache,
+  y compris pendant le développement d'une même version.
+- **Switch clair/sombre** : lecture et écriture `localStorage` protégées, icônes
+  soleil/lune gérées par CSS dédié, `aria-pressed` synchronisé et `theme-color`
+  mis à jour au changement de thème.
+- **Menu mobile** : conflit `lg:hidden` / breakpoint custom supprimé — hamburger
+  et panneau au même seuil responsive `1180px`.
+
+---
+
 ## [1.3.1] - 2026-04-25
 
 > Cette release consolide trois chantiers menés sur le même cycle : refonte
@@ -14,7 +137,7 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 > client-side), durcissement **sécurité** (CSP/nonces, rate limiter Redis,
 > validation des uploads par magic bytes), et rename `youtube_downloader` →
 > `downloader` avec branding adaptatif multi-plateformes. Elle ajoute aussi
-> LibreSpeed, le passage officiel à GHCR et un gros polish responsive.
+> LibreSpeed et un gros polish responsive.
 
 ### Renommé : `youtube_downloader` → `downloader`
 
@@ -142,23 +265,6 @@ et couvertes par une suite de tests dédiée (`tests/test_security.py`, 37 tests
   d'ajouter un script externe sans hash SHA-384. Appliqué à `qrcode-generator`
   (seul CDN encore référencé).
 
-### Versioning et publication
-
-- **Source de version unique** : ajout du fichier `VERSION` (`1.3.1`) et lecture
-  par `app.__version__` quand `APP_VERSION` n'est pas défini.
-- **Publication GHCR officielle** : les exemples de production et le `compose.yml`
-  utilisent désormais `ghcr.io/doalou/toolbox_everything:1.3.1`.
-- **Workflow Docker unifié** : suppression du workflow doublon
-  `.github/workflows/docker-image.yml`; conservation d'un seul pipeline de
-  publication GHCR avec signature cosign.
-- **Tags semver propres** : publication des tags `1.3.1`, `1.3` et `latest`.
-- **Contrôle release** : le workflow refuse un tag Git `vX.Y.Z` qui ne correspond
-  pas au contenu du fichier `VERSION`.
-- **Makefile** : `docker-build` tague aussi l'image GHCR locale
-  `ghcr.io/doalou/toolbox_everything:{version}` et `latest`.
-- **Labels OCI** : source/documentation Dockerfile corrigées vers
-  `https://github.com/doalou/toolbox_everything`.
-
 ### Ajouté
 
 - **`app/core/security_headers.py`** : nonce CSP + headers HTTP.
@@ -194,8 +300,7 @@ et couvertes par une suite de tests dédiée (`tests/test_security.py`, 37 tests
   100, rejet explicite de `DecompressionBombError`, format de sortie validé.
 - `env.example` : nettoyé des 20+ variables fantômes jamais lues par le code.
   Ne liste que ce que l'app consomme réellement.
-- `README.md` : documentation mise à jour pour GHCR, LibreSpeed, la version
-  `1.3.1` et la procédure de release.
+- `README.md` : documentation mise à jour pour LibreSpeed et la version `1.3.1`.
 
 ### Retiré
 

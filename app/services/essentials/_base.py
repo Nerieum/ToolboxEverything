@@ -7,8 +7,8 @@ registry plutôt que sur une liste hardcodée.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import List, Mapping
 
 
 @dataclass(frozen=True)
@@ -51,7 +51,7 @@ class Tool:
     external_scripts: tuple[ExternalScript, ...] = field(default_factory=tuple)
 
 
-TOOLS: List[Tool] = []
+TOOLS: list[Tool] = []
 
 
 def register_tool(tool: Tool) -> Tool:
@@ -62,7 +62,7 @@ def register_tool(tool: Tool) -> Tool:
     return tool
 
 
-def nav_tools(limit: int | None = None) -> List[Tool]:
+def nav_tools(limit: int | None = None) -> list[Tool]:
     """Sous-ensemble pour le menu nav (outils les plus utilisés)."""
     tools = [t for t in TOOLS if t.in_nav]
     if limit is not None:

@@ -17,56 +17,39 @@ l'activer.
 
 from __future__ import annotations
 
-import requests
-from flask import Blueprint, current_app, jsonify, render_template
+from flask import Blueprint, jsonify, render_template
 
+from app.core.api import json_endpoint
 from app.core.rate_limit import limiter
+from app.services._embedded import NOT_CONFIGURED, internal_url, probe, public_url
 
 pdf_bp = Blueprint("pdf", __name__, template_folder="../../templates")
 
 
-def _public_url() -> str:
-    cfg = current_app.config
-    return (cfg.get("STIRLING_PDF_PUBLIC_URL") or cfg.get("STIRLING_PDF_URL") or "").rstrip("/")
-
-
-def _internal_url() -> str:
-    return (current_app.config.get("STIRLING_PDF_URL") or "").rstrip("/")
-
-
 @pdf_bp.route("/")
 def index():
-    public = _public_url()
-    configured = bool(public)
+    public = public_url("STIRLING_PDF_PUBLIC_URL", "STIRLING_PDF_URL")
     return render_template(
         "pdf.html",
         stirling_public_url=public,
-        stirling_configured=configured,
+        stirling_configured=bool(public),
     )
 
 
 @pdf_bp.route("/status")
+@json_endpoint
 @limiter.limit("60 per minute")
 def status():
     """Ping rapide de l'instance Stirling PDF (utilisé pour l'UI)."""
-    internal = _internal_url()
+    internal = internal_url("STIRLING_PDF_URL")
     if not internal:
-        return jsonify({"enabled": False, "reachable": False, "reason": "not_configured"}), 200
+        return jsonify(NOT_CONFIGURED), 200
 
-    try:
-        resp = requests.get(
-            f"{internal}/api/v1/info/status",
-            timeout=3,
-            headers={"User-Agent": "Toolbox-Everything"},
-        )
-        if resp.status_code < 500:
-            return jsonify({"enabled": True, "reachable": True, "status_code": resp.status_code})
-    except requests.RequestException as exc:
-        return jsonify({"enabled": True, "reachable": False, "reason": str(exc)}), 200
+    # 1) Endpoint de statut dédié. On le garde s'il est joignable (<500) ou s'il
+    #    a échoué au niveau réseau (on remonte alors l'erreur).
+    result = probe(f"{internal}/api/v1/info/status")
+    if result.get("reachable") or "reason" in result:
+        return jsonify(result), 200
 
-    # Fallback : ping la racine
-    try:
-        resp = requests.get(internal, timeout=3)
-        return jsonify({"enabled": True, "reachable": resp.status_code < 500, "status_code": resp.status_code})
-    except requests.RequestException as exc:
-        return jsonify({"enabled": True, "reachable": False, "reason": str(exc)}), 200
+    # 2) Fallback : ping de la racine (Stirling a répondu ≥500 sur l'API).
+    return jsonify(probe(internal)), 200

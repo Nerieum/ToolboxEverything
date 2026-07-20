@@ -19,13 +19,13 @@ def test_index_renders(client):
     resp = client.get("/")
     assert resp.status_code == 200
     assert b"Toolbox" in resp.data
-    assert b"v1.3.1" in resp.data
+    assert b"v2.0.0" in resp.data
     assert b"Speedtest" in resp.data
     assert b"/speedtest/" in resp.data
 
 
 def test_version_file_is_release_source():
-    assert Path("VERSION").read_text(encoding="utf-8").strip() == "1.3.1"
+    assert Path("VERSION").read_text(encoding="utf-8").strip() == "2.0.0"
 
 
 def test_base_template_loads_local_css_assets(client):
@@ -39,7 +39,11 @@ def test_header_controls_are_csp_safe(client):
     resp = client.get("/")
     assert resp.status_code == 200
     assert b'id="themeToggle"' in resp.data
-    assert b'header-icon-button--mobile' in resp.data
+    assert b'aria-pressed="false"' in resp.data
+    assert b"theme-toggle__icon--sun" in resp.data
+    assert b"theme-toggle__icon--moon" in resp.data
+    assert b"header-icon-button--mobile" in resp.data
+    assert b'id="mobileMenu" class="mobile-menu hidden"' in resp.data
     assert b"onclick=" not in resp.data
 
 
@@ -75,8 +79,15 @@ def test_responsive_header_css_is_not_overridden():
     assert ".site-header__nav-center {\n    display: none;" in css
     assert "@media (min-width: 1180px)" in css
     assert ".header-icon-button--mobile" in css
+    assert ".theme-toggle__icon--sun" in css
+    assert ".theme-toggle__icon--moon" in css
     assert ".media-file-grid" in css
-    assert ".home-card-grid" in css
+    assert ".home-cover" in css
+    assert ".home-workbench" in css
+    assert ".home-tool" in css
+    assert "[hidden] {\n    display: none !important;" in css
+    assert ".mobile-menu__submenu.hidden" in css
+    assert ".tool-overlay.hidden" in css
 
 
 def test_downloader_index(client):
@@ -85,7 +96,7 @@ def test_downloader_index(client):
 
 
 def test_legacy_youtube_redirects_to_downloader(client):
-    """Compat ascendante après le rename /youtube → /downloader (v1.3.1)."""
+    """Compat ascendante après le rename /youtube → /downloader (v1.3.2)."""
     resp = client.get("/youtube/", follow_redirects=False)
     assert resp.status_code in (301, 308)
     assert "/downloader" in resp.headers["Location"]
@@ -103,14 +114,19 @@ def test_essentials_index(client):
 
 def test_pdf_fallback_when_not_configured(client, app):
     """Sans STIRLING_PDF_URL, la page explique comment configurer."""
-    prev = app.config.get("STIRLING_PDF_URL")
+    prev_i = app.config.get("STIRLING_PDF_URL")
+    prev_p = app.config.get("STIRLING_PDF_PUBLIC_URL")
     app.config["STIRLING_PDF_URL"] = ""
+    app.config["STIRLING_PDF_PUBLIC_URL"] = ""
     try:
         resp = client.get("/pdf/")
         assert resp.status_code == 200
         assert b"Stirling" in resp.data
+        assert b"docker compose up -d stirling-pdf" in resp.data
+        assert b"service-offline" in resp.data
     finally:
-        app.config["STIRLING_PDF_URL"] = prev or ""
+        app.config["STIRLING_PDF_URL"] = prev_i or ""
+        app.config["STIRLING_PDF_PUBLIC_URL"] = prev_p or ""
 
 
 def test_pdf_status_not_configured(client, app):
@@ -127,14 +143,19 @@ def test_pdf_status_not_configured(client, app):
 
 def test_speedtest_fallback_when_not_configured(client, app):
     """Sans LIBRESPEED_URL, la page explique comment configurer."""
-    prev = app.config.get("LIBRESPEED_URL")
+    prev_i = app.config.get("LIBRESPEED_URL")
+    prev_p = app.config.get("LIBRESPEED_PUBLIC_URL")
     app.config["LIBRESPEED_URL"] = ""
+    app.config["LIBRESPEED_PUBLIC_URL"] = ""
     try:
         resp = client.get("/speedtest/")
         assert resp.status_code == 200
         assert b"LibreSpeed" in resp.data
+        assert b"docker compose up -d librespeed" in resp.data
+        assert b"service-offline" in resp.data
     finally:
-        app.config["LIBRESPEED_URL"] = prev or ""
+        app.config["LIBRESPEED_URL"] = prev_i or ""
+        app.config["LIBRESPEED_PUBLIC_URL"] = prev_p or ""
 
 
 def test_speedtest_status_not_configured(client, app):
@@ -176,3 +197,77 @@ def test_downloader_download_requires_body(client):
     assert resp.status_code == 400
     data = resp.get_json()
     assert "error" in data
+
+
+def test_pdf_configured_renders_iframe(client, app):
+    prev_i = app.config.get("STIRLING_PDF_URL")
+    prev_p = app.config.get("STIRLING_PDF_PUBLIC_URL")
+    app.config["STIRLING_PDF_URL"] = "http://stirling-pdf:8080"
+    app.config["STIRLING_PDF_PUBLIC_URL"] = "http://localhost:8080"
+    try:
+        resp = client.get("/pdf/")
+        assert resp.status_code == 200
+        assert b"http://localhost:8080" in resp.data
+        assert b"pdf-frame" in resp.data
+        assert b'data-service-status="/pdf/status"' in resp.data
+        assert b"js/embedded-service.js" in resp.data
+    finally:
+        app.config["STIRLING_PDF_URL"] = prev_i or ""
+        app.config["STIRLING_PDF_PUBLIC_URL"] = prev_p or ""
+
+
+def test_pdf_status_configured_reachable(client, app, monkeypatch):
+    import app.services.pdf_tools.routes as pdf_routes
+
+    app.config["STIRLING_PDF_URL"] = "http://stirling-pdf:8080"
+    monkeypatch.setattr(
+        pdf_routes,
+        "probe",
+        lambda url, **kw: {"enabled": True, "reachable": True, "status_code": 200},
+    )
+    try:
+        resp = client.get("/pdf/status")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["enabled"] is True
+        assert data["reachable"] is True
+    finally:
+        app.config["STIRLING_PDF_URL"] = ""
+
+
+def test_speedtest_configured_renders_iframe(client, app):
+    prev_i = app.config.get("LIBRESPEED_URL")
+    prev_p = app.config.get("LIBRESPEED_PUBLIC_URL")
+    app.config["LIBRESPEED_URL"] = "http://librespeed"
+    app.config["LIBRESPEED_PUBLIC_URL"] = "http://localhost:8081"
+    try:
+        resp = client.get("/speedtest/")
+        assert resp.status_code == 200
+        assert b"http://localhost:8081" in resp.data
+        assert b'data-service-status="/speedtest/status"' in resp.data
+        assert b"js/embedded-service.js" in resp.data
+    finally:
+        app.config["LIBRESPEED_URL"] = prev_i or ""
+        app.config["LIBRESPEED_PUBLIC_URL"] = prev_p or ""
+
+
+def test_editorial_design_system_present(client):
+    """La refonte 2.0.0 : tokens, Fraunces et accueil éditorial."""
+    css = Path("app/static/css/style.css").read_text(encoding="utf-8")
+    assert ":root {" in css
+    assert "--accent:" in css
+    assert "--paper:" in css
+    assert ".dark {" in css
+    assert "@font-face" in css
+    assert ".home-cover" in css
+    assert ".home-workbench" in css
+
+    resp = client.get("/")
+    assert resp.status_code == 200
+    assert b"fraunces-var.woff2" in resp.data
+    assert b"home-tool__title" in resp.data
+    assert "Les outils qu’on finit".encode() in resp.data
+    assert b"Pas de compte" in resp.data
+    assert b"Pourquoi utiliser nos outils" not in resp.data
+    assert b"js/shell.js" in resp.data
+    assert b"css/style.css?v=2.0.0-" in resp.data

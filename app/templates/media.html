@@ -6,7 +6,7 @@
 <div class="max-w-4xl mx-auto px-4 py-10">
     <div class="tool-hero">
         <h1 class="tool-hero__title">
-            Convertisseur <span style="color: #2563eb;">Média</span>
+            Convertisseur <span class="tool-hero__accent">Média</span>
         </h1>
         <p class="tool-hero__subtitle">
             Convertissez vos images et vidéos au format voulu.
@@ -35,7 +35,7 @@
     <div id="conversionPanel" class="hidden space-y-5">
         <div class="tool-panel">
             <h3 class="tool-panel__heading">
-                <i class="fas fa-folder-open text-blue-500"></i>
+                <i class="fas fa-folder-open"></i>
                 Fichiers sélectionnés
             </h3>
             <div id="fileList" class="media-file-grid"></div>
@@ -43,14 +43,14 @@
 
         <div class="tool-panel">
             <h3 class="tool-panel__heading">
-                <i class="fas fa-sliders-h text-indigo-500"></i>
+                <i class="fas fa-sliders-h"></i>
                 Options de conversion
             </h3>
             <form id="conversionForm" class="space-y-5">
                 <div class="grid md:grid-cols-2 gap-5">
                     <div>
-                        <label class="tool-label">Format de sortie</label>
-                        <select name="format" class="tool-select">
+                        <label class="tool-label" for="media-format">Format de sortie</label>
+                        <select id="media-format" name="format" class="tool-select">
                             <optgroup label="Images">
                                 <option value="jpeg">JPEG</option>
                                 <option value="png">PNG</option>
@@ -63,11 +63,11 @@
                         </select>
                     </div>
                     <div>
-                        <label class="tool-label">Qualité</label>
+                        <label class="tool-label" for="media-quality">Qualité</label>
                         <div class="flex items-center gap-3">
-                            <input type="range" name="quality" min="1" max="100" value="85"
-                                   class="flex-1 accent-indigo-500 h-1.5">
-                            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 w-10 text-right"
+                            <input id="media-quality" type="range" name="quality" min="1" max="100" value="85"
+                                   class="tool-range flex-1">
+                            <span class="media-quality-value"
                                   id="qualityValue">85 %</span>
                         </div>
                     </div>
@@ -81,12 +81,12 @@
     </div>
 </div>
 
-<div id="loadingOverlay" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+<div id="loadingOverlay" class="tool-overlay hidden">
     <div class="tool-panel max-w-sm w-full mx-4 text-center py-8">
         <div class="inline-flex items-center justify-center w-12 h-12 mb-4">
-            <i class="fas fa-circle-notch text-2xl text-indigo-500 animate-spin"></i>
+            <i class="fas fa-circle-notch text-2xl tool-loading-icon animate-spin"></i>
         </div>
-        <p class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Conversion en cours</p>
+        <p class="tool-state-title mb-3">Conversion en cours</p>
         <div class="tool-progress mb-2">
             <div id="progressBar" class="tool-progress__bar" style="width: 0%"></div>
         </div>
@@ -94,151 +94,5 @@
     </div>
 </div>
 
-<script nonce="{{ csp_nonce }}">
-function showNotification(message, type = 'success') {
-    const notification = document.createElement('div');
-    const bg = type === 'error' ? 'background:#dc2626' : 'background:#059669';
-    notification.style.cssText = `${bg};color:#fff;padding:0.7rem 1rem;border-radius:0.5rem;font-size:0.85rem;font-weight:600;`;
-    notification.textContent = message;
-    const container = document.getElementById('notifications');
-    if (container) {
-        container.appendChild(notification);
-        setTimeout(() => notification.remove(), 3000);
-    }
-}
-
-const fileInput = document.getElementById('fileInput');
-const dropZone = document.getElementById('dropZone');
-const fileList = document.getElementById('fileList');
-const conversionPanel = document.getElementById('conversionPanel');
-const conversionForm = document.getElementById('conversionForm');
-
-let selectedFiles = [];
-
-function updateFileList() {
-    fileList.innerHTML = '';
-    selectedFiles.forEach((file, index) => {
-        const div = document.createElement('div');
-        div.className = 'relative group text-center';
-        div.innerHTML = `
-            <div class="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-                ${file.type.startsWith('image/')
-                    ? `<img src="${URL.createObjectURL(file)}" class="object-cover w-full h-full">`
-                    : `<div class="flex items-center justify-center h-full">
-                        <i class="fas fa-video text-lg text-gray-400"></i>
-                       </div>`}
-            </div>
-            <div class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 truncate">${file.name}</div>
-            <button type="button" data-remove-file="${index}"
-                    class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-500 text-white text-[10px]
-                           flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        fileList.appendChild(div);
-    });
-    conversionPanel.classList.toggle('hidden', selectedFiles.length === 0);
-}
-
-function removeFile(index) {
-    selectedFiles.splice(index, 1);
-    updateFileList();
-}
-
-fileList.addEventListener('click', (event) => {
-    const removeButton = event.target.closest('[data-remove-file]');
-    if (!removeButton) return;
-    removeFile(Number(removeButton.dataset.removeFile));
-});
-
-dropZone.addEventListener('click', () => fileInput.click());
-
-dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('is-dragover');
-});
-
-dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('is-dragover');
-});
-
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('is-dragover');
-    handleFiles(Array.from(e.dataTransfer.files));
-});
-
-fileInput.addEventListener('change', (e) => {
-    handleFiles(Array.from(e.target.files));
-});
-
-function handleFiles(files) {
-    selectedFiles = selectedFiles.concat(files);
-    updateFileList();
-}
-
-const qualityRange = document.querySelector('input[name="quality"]');
-const qualityValue = document.getElementById('qualityValue');
-if (qualityRange) {
-    qualityRange.addEventListener('input', () => {
-        qualityValue.textContent = `${qualityRange.value} %`;
-    });
-}
-
-conversionForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(conversionForm);
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-
-    try {
-        loadingOverlay.classList.remove('hidden');
-        
-        for (let i = 0; i < selectedFiles.length; i++) {
-            const file = selectedFiles[i];
-            const progress = (i / selectedFiles.length) * 100;
-            
-            progressBar.style.width = `${progress}%`;
-            progressText.textContent = `Conversion de ${file.name} (${i + 1}/${selectedFiles.length})`;
-
-            try {
-                formData.set('file', file);
-                const response = await fetch('/media/convert', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) throw new Error(await response.text());
-
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `converted_${file.name}`;
-                a.click();
-                URL.revokeObjectURL(url);
-
-                showNotification(`Conversion réussie pour ${file.name}`);
-            } catch (error) {
-                console.error(error);
-                showNotification(`Erreur lors de la conversion de ${file.name}`, 'error');
-            }
-        }
-
-        progressBar.style.width = '100%';
-        progressText.textContent = 'Conversion terminée !';
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-    } finally {
-        loadingOverlay.classList.add('hidden');
-        progressBar.style.width = '0%';
-        progressText.textContent = 'Préparation';
-    }
-});
-</script>
-{% endblock %}
-
-{% block tools_features %}
-{% include 'tool_features.html' %}
+<script src="{{ url_for('static', filename='js/media.js', v=asset_version) }}" defer></script>
 {% endblock %}

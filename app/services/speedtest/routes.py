@@ -12,26 +12,18 @@ Toolbox embarque LibreSpeed via une iframe. L'URL peut être :
 
 from __future__ import annotations
 
-import requests
-from flask import Blueprint, current_app, jsonify, render_template
+from flask import Blueprint, jsonify, render_template
 
+from app.core.api import json_endpoint
 from app.core.rate_limit import limiter
+from app.services._embedded import NOT_CONFIGURED, internal_url, probe, public_url
 
 speedtest_bp = Blueprint("speedtest", __name__, template_folder="../../templates")
 
 
-def _public_url() -> str:
-    cfg = current_app.config
-    return (cfg.get("LIBRESPEED_PUBLIC_URL") or cfg.get("LIBRESPEED_URL") or "").rstrip("/")
-
-
-def _internal_url() -> str:
-    return (current_app.config.get("LIBRESPEED_URL") or "").rstrip("/")
-
-
 @speedtest_bp.route("/")
 def index():
-    public = _public_url()
+    public = public_url("LIBRESPEED_PUBLIC_URL", "LIBRESPEED_URL")
     return render_template(
         "speedtest.html",
         librespeed_public_url=public,
@@ -40,19 +32,11 @@ def index():
 
 
 @speedtest_bp.route("/status")
+@json_endpoint
 @limiter.limit("60 per minute")
 def status():
     """Ping rapide de l'instance LibreSpeed (utilisé pour l'UI)."""
-    internal = _internal_url()
+    internal = internal_url("LIBRESPEED_URL")
     if not internal:
-        return jsonify({"enabled": False, "reachable": False, "reason": "not_configured"}), 200
-
-    try:
-        resp = requests.get(
-            internal,
-            timeout=3,
-            headers={"User-Agent": "Toolbox-Everything"},
-        )
-        return jsonify({"enabled": True, "reachable": resp.status_code < 500, "status_code": resp.status_code})
-    except requests.RequestException as exc:
-        return jsonify({"enabled": True, "reachable": False, "reason": str(exc)}), 200
+        return jsonify(NOT_CONFIGURED), 200
+    return jsonify(probe(internal)), 200

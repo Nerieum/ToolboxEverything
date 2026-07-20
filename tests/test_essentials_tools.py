@@ -1,4 +1,4 @@
-"""Tests d'intégration pour les outils essentials v1.3.1.
+"""Tests d'intégration pour les outils essentials v1.3.2.
 
 Les outils sont désormais 100% client-side — on teste donc que :
   - chaque sous-blueprint est correctement enregistré (GET 200),
@@ -21,6 +21,7 @@ def test_each_tool_page_renders(client, tool):
     """
     with client.application.test_request_context():
         from flask import url_for
+
         path = url_for(tool.endpoint)
     resp = client.get(path)
     assert resp.status_code == 200, f"{tool.slug} a répondu {resp.status_code}"
@@ -31,11 +32,22 @@ def test_each_tool_page_renders(client, tool):
 
 
 def test_registry_has_all_13_tools():
-    """La registry contient bien les 13 outils attendus de la v1.3.1."""
+    """La registry contient bien les 13 outils attendus de la v1.3.2."""
     slugs = {t.slug for t in TOOLS}
     expected = {
-        "qr", "password", "hash", "base64", "json", "timestamp", "color",
-        "uuid", "jwt", "regex", "url", "lorem", "diff",
+        "qr",
+        "password",
+        "hash",
+        "base64",
+        "json",
+        "timestamp",
+        "color",
+        "uuid",
+        "jwt",
+        "regex",
+        "url",
+        "lorem",
+        "diff",
     }
     assert slugs == expected, f"Tools attendus: {expected}, obtenus: {slugs}"
 
@@ -60,11 +72,12 @@ def test_essentials_index_lists_all_tools(client):
     assert resp.status_code == 200
     with client.application.test_request_context():
         from flask import url_for
+
         for tool in TOOLS:
             expected_href = f'href="{url_for(tool.endpoint)}"'.encode()
-            assert expected_href in resp.data, (
-                f"{tool.slug} absent de la homepage (href {expected_href!r})"
-            )
+            assert (
+                expected_href in resp.data
+            ), f"{tool.slug} absent de la homepage (href {expected_href!r})"
 
 
 def test_uuid_card_has_indigo_accent(client):

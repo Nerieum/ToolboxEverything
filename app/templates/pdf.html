@@ -3,64 +3,100 @@
 {% block title %}Outils PDF | Toolbox Everything{% endblock %}
 
 {% block content %}
-{% if stirling_configured %}
-    <div class="pdf-frame-wrap">
-        <div class="pdf-frame-toolbar">
-            <div class="pdf-frame-toolbar__left">
-                <span class="pdf-frame-toolbar__dot" id="pdfStatusDot" aria-hidden="true"></span>
-                <h1 class="pdf-frame-toolbar__title">Instance Stirling PDF</h1>
-            </div>
-            <div class="pdf-frame-toolbar__right">
-                <a href="{{ stirling_public_url }}" target="_blank" rel="noopener noreferrer"
-                   class="tool-btn tool-btn--ghost tool-btn--sm" aria-label="Ouvrir dans un nouvel onglet">
-                    <i class="fas fa-external-link-alt text-xs"></i>
-                </a>
-            </div>
-        </div>
-        <iframe id="pdfFrame"
-                class="pdf-frame"
-                src="{{ stirling_public_url }}"
-                title="Stirling PDF"
-                loading="lazy"
-                referrerpolicy="no-referrer"></iframe>
-    </div>
-
-    <script nonce="{{ csp_nonce }}">
-        (function () {
-            const dot = document.getElementById('pdfStatusDot');
-            fetch('/pdf/status', { headers: { 'Accept': 'application/json' } })
-                .then(r => r.json())
-                .then(data => {
-                    dot.classList.add(data.reachable ? 'pdf-frame-toolbar__dot--ok' : 'pdf-frame-toolbar__dot--warn');
-                })
-                .catch(() => dot.classList.add('pdf-frame-toolbar__dot--warn'));
-        })();
-    </script>
-{% else %}
-    <div class="max-w-2xl mx-auto px-4 py-12">
-        <div class="tool-hero">
-            <h1 class="tool-hero__title">PDF</h1>
-            <p class="tool-hero__subtitle">
-                Stirling PDF n'est pas encore démarré.
+<section class="service-page service-page--pdf">
+    <header class="service-header">
+        <div class="service-header__copy">
+            <p class="service-header__eyebrow">04 / Documents · Stirling PDF</p>
+            <h1 class="service-header__title">L’atelier PDF</h1>
+            <p class="service-header__description">
+                Assembler, découper, alléger, convertir ou reconnaître du texte.
             </p>
         </div>
 
-        <div class="tool-panel">
-            <div class="pdf-setup-block">
-                <pre class="pdf-setup-code"><code>docker compose up -d</code></pre>
+        <div class="service-header__actions">
+            {% if stirling_configured %}
+                <span class="service-status"
+                      data-service-status="{{ url_for('pdf.status') }}"
+                      data-state="checking"
+                      role="status"
+                      aria-live="polite">
+                    <span class="service-status__dot" aria-hidden="true"></span>
+                    <span class="service-status__label">Vérification</span>
+                </span>
+                <a href="{{ stirling_public_url }}" target="_blank" rel="noopener noreferrer"
+                   class="service-open" aria-label="Ouvrir Stirling PDF dans un nouvel onglet">
+                    <span>Ouvrir à part</span>
+                    <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </a>
+            {% else %}
+                <span class="service-status" data-state="offline">
+                    <span class="service-status__dot" aria-hidden="true"></span>
+                    <span class="service-status__label">Non configuré</span>
+                </span>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if stirling_configured %}
+        <div class="service-frame-shell" data-service-frame-shell>
+            <div class="service-frame-bar" aria-hidden="true">
+                <span>Stirling PDF</span>
+                <span>Interface embarquée</span>
+            </div>
+            <div class="service-frame-viewport">
+                <div class="service-frame-loading" aria-hidden="true">
+                    <span class="service-frame-loading__mark"></span>
+                    <span>Chargement de Stirling PDF</span>
+                </div>
+                <iframe class="service-frame pdf-frame"
+                        data-service-frame
+                        src="{{ stirling_public_url }}"
+                        title="Stirling PDF"
+                        loading="eager"
+                        referrerpolicy="no-referrer"></iframe>
+            </div>
+        </div>
+    {% else %}
+        <section class="service-offline" aria-labelledby="pdf-setup-title">
+            <div class="service-offline__intro">
+                <p class="service-offline__state"><span></span> Service hors ligne</p>
+                <h2 id="pdf-setup-title">Le moteur est prêt.<br><em>Il reste à le démarrer.</em></h2>
+                <p>
+                    Stirling PDF apporte plus d’une centaine d’opérations sans envoyer vos
+                    documents vers un service public. L’instance est déjà décrite dans Compose.
+                </p>
+                <ul class="service-capabilities" aria-label="Fonctions disponibles">
+                    <li><span>01</span> Fusion & découpe</li>
+                    <li><span>02</span> Compression & conversion</li>
+                    <li><span>03</span> OCR, signatures & filigranes</li>
+                </ul>
             </div>
 
-            <a href="https://github.com/Stirling-Tools/Stirling-PDF"
-               target="_blank" rel="noopener noreferrer"
-               class="tool-btn tool-btn--ghost tool-btn--sm">
-                <i class="fab fa-github"></i>
-                <span>Stirling PDF</span>
-            </a>
-        </div>
-    </div>
-{% endif %}
-{% endblock %}
+            <aside class="service-runbook" aria-label="Mise en route de Stirling PDF">
+                <header>
+                    <span>Mise en route</span>
+                    <span>≈ 1 minute</span>
+                </header>
+                <ol>
+                    <li><span>1</span><p>Ouvrir un terminal à la racine du projet.</p></li>
+                    <li><span>2</span><p>Lancer le service avec la commande ci-dessous.</p></li>
+                    <li><span>3</span><p>Recharger cette page quand le conteneur est prêt.</p></li>
+                </ol>
+                <div class="service-command">
+                    <span>Commande</span>
+                    <code>docker compose up -d stirling-pdf</code>
+                </div>
+                <a href="https://github.com/Stirling-Tools/Stirling-PDF"
+                   target="_blank" rel="noopener noreferrer" class="service-source">
+                    <span>Documentation du moteur</span>
+                    <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </a>
+            </aside>
+        </section>
+    {% endif %}
+</section>
 
-{% block tools_features %}
-{% include 'tool_features.html' %}
+{% if stirling_configured %}
+    <script src="{{ url_for('static', filename='js/embedded-service.js', v=asset_version) }}" defer></script>
+{% endif %}
 {% endblock %}

@@ -3,18 +3,19 @@
 {% block title %}Outils essentiels | Toolbox Everything{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 py-10">
-    <div class="text-center mb-8">
-        <h1 class="home-hero__title" style="font-size: clamp(1.8rem, 4vw, 2.6rem);">
-            Les outils <span class="home-hero__title-accent">essentiels</span>
+<div class="essentials-page">
+    <header class="essentials-header">
+        <p class="essentials-header__eyebrow">Utilitaires locaux</p>
+        <h1 class="home-hero__title home-hero__title--compact">
+            Les outils <span>essentiels.</span>
         </h1>
         <p class="home-hero__subtitle">
             {{ tools|length }} micro-outils pour le quotidien. Tout est calculé dans le navigateur,
             rien ne part sur le réseau.
         </p>
-    </div>
+    </header>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div class="ess-directory">
         {% for tool in tools %}
             <a href="{{ url_for(tool.endpoint) }}"
                class="ess-card group"
@@ -31,8 +32,4 @@
         {% endfor %}
     </div>
 </div>
-{% endblock %}
-
-{% block tools_features %}
-{% include 'tool_features.html' %}
 {% endblock %}

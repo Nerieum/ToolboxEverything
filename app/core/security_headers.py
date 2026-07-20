@@ -24,24 +24,24 @@ from __future__ import annotations
 
 import os
 import secrets
-from typing import Iterable
+from collections.abc import Iterable
 
 from flask import Flask, Response, g, request
 
 # Domaines externes autorisés pour les scripts (CDN).
 # Tout nouvel ajout doit s'accompagner d'un `integrity=` SRI côté template.
-_ALLOWED_SCRIPT_CDNS = (
-    "https://cdn.jsdelivr.net",
-)
+_ALLOWED_SCRIPT_CDNS = ("https://cdn.jsdelivr.net",)
 
 
 def _build_csp(nonce: str, frame_src_extra: Iterable[str] = ()) -> str:
     frame_src = " ".join(["'self'", *frame_src_extra]).strip()
-    script_src = " ".join([
-        "'self'",
-        f"'nonce-{nonce}'",
-        *_ALLOWED_SCRIPT_CDNS,
-    ])
+    script_src = " ".join(
+        [
+            "'self'",
+            f"'nonce-{nonce}'",
+            *_ALLOWED_SCRIPT_CDNS,
+        ]
+    )
     directives = [
         "default-src 'self'",
         f"script-src {script_src}",
@@ -67,28 +67,30 @@ def _build_csp(nonce: str, frame_src_extra: Iterable[str] = ()) -> str:
     return "; ".join(directives)
 
 
-_PERMISSIONS_POLICY = ", ".join([
-    "accelerometer=()",
-    "ambient-light-sensor=()",
-    "autoplay=(self)",
-    "camera=()",
-    "display-capture=()",
-    "encrypted-media=()",
-    "fullscreen=(self)",
-    "geolocation=()",
-    "gyroscope=()",
-    "magnetometer=()",
-    "microphone=()",
-    "midi=()",
-    "payment=()",
-    "picture-in-picture=(self)",
-    "publickey-credentials-get=()",
-    "screen-wake-lock=()",
-    "sync-xhr=()",
-    "usb=()",
-    "web-share=()",
-    "xr-spatial-tracking=()",
-])
+_PERMISSIONS_POLICY = ", ".join(
+    [
+        "accelerometer=()",
+        "ambient-light-sensor=()",
+        "autoplay=(self)",
+        "camera=()",
+        "display-capture=()",
+        "encrypted-media=()",
+        "fullscreen=(self)",
+        "geolocation=()",
+        "gyroscope=()",
+        "magnetometer=()",
+        "microphone=()",
+        "midi=()",
+        "payment=()",
+        "picture-in-picture=(self)",
+        "publickey-credentials-get=()",
+        "screen-wake-lock=()",
+        "sync-xhr=()",
+        "usb=()",
+        "web-share=()",
+        "xr-spatial-tracking=()",
+    ]
+)
 
 
 def register_security_headers(app: Flask) -> None:

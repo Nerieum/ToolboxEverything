@@ -1,7 +1,7 @@
 """
 Blueprint `downloader` : extraction d'infos + téléchargement vidéo / audio.
 
-Anciennement `youtube_downloader`, renommé en v1.3.1 puisque l'application
+Anciennement `youtube_downloader`, renommé en v1.3.2 puisque l'application
 accepte désormais YouTube, Vimeo, Dailymotion et TikTok (cf. la whitelist
 `ALLOWED_VIDEO_HOSTS` ci-dessous).
 
@@ -14,17 +14,24 @@ from __future__ import annotations
 
 import hashlib
 import os
-import re
 import shutil
 import tempfile
-import unicodedata
-from typing import Any, Dict
+from typing import Any
 from urllib.parse import urlparse
 
-from flask import (Blueprint, after_this_request, current_app, jsonify,
-                   render_template, request, send_file)
+from flask import (
+    Blueprint,
+    after_this_request,
+    current_app,
+    jsonify,
+    render_template,
+    request,
+    send_file,
+)
 from yt_dlp import YoutubeDL
 
+from app.core.api import json_endpoint
+from app.core.files import sanitize_filename
 from app.core.rate_limit import limiter
 from config import Config
 
@@ -34,18 +41,24 @@ downloader_bp = Blueprint("downloader", __name__)
 # Plateformes vidéo publiques mainstream explicitement autorisées.
 # Tout autre domaine est rejeté en amont (yt-dlp supporte >1800 sites,
 # beaucoup sont privés ou douteux — pas la peine d'ouvrir cette surface).
-ALLOWED_VIDEO_HOSTS: frozenset[str] = frozenset({
-    "youtube.com", "youtu.be",
-    "vimeo.com",
-    "dailymotion.com", "dai.ly",
-    "tiktok.com",
-})
+ALLOWED_VIDEO_HOSTS: frozenset[str] = frozenset(
+    {
+        "youtube.com",
+        "youtu.be",
+        "vimeo.com",
+        "dailymotion.com",
+        "dai.ly",
+        "tiktok.com",
+    }
+)
 
 # Mapping host → identifiant de plateforme (utilisé côté UI pour le branding).
-PLATFORM_ALIASES: Dict[str, str] = {
-    "youtube.com": "youtube", "youtu.be": "youtube",
+PLATFORM_ALIASES: dict[str, str] = {
+    "youtube.com": "youtube",
+    "youtu.be": "youtube",
     "vimeo.com": "vimeo",
-    "dailymotion.com": "dailymotion", "dai.ly": "dailymotion",
+    "dailymotion.com": "dailymotion",
+    "dai.ly": "dailymotion",
     "tiktok.com": "tiktok",
 }
 
@@ -61,13 +74,10 @@ def _is_allowed_url(url: str) -> bool:
     host = (parsed.hostname or "").lower().lstrip(".")
     if not host:
         return False
-    return any(
-        host == allowed or host.endswith("." + allowed)
-        for allowed in ALLOWED_VIDEO_HOSTS
-    )
+    return any(host == allowed or host.endswith("." + allowed) for allowed in ALLOWED_VIDEO_HOSTS)
 
 
-QUALITY_FORMAT_MAP: Dict[str, str] = {
+QUALITY_FORMAT_MAP: dict[str, str] = {
     "highest": "bestvideo+bestaudio/best",
     "1080p": "bestvideo[height<=1080]+bestaudio/best[height<=1080]",
     "720p": "bestvideo[height<=720]+bestaudio/best[height<=720]",
@@ -80,17 +90,7 @@ def _get_format_string(quality: str) -> str:
     return QUALITY_FORMAT_MAP.get(quality, "bestvideo+bestaudio/best")
 
 
-def _sanitize_filename(filename: str) -> str:
-    if not filename:
-        return "video"
-    filename = unicodedata.normalize("NFKD", filename)
-    filename = filename.encode("ASCII", "ignore").decode("ASCII")
-    filename = re.sub(r"[^\w\s-]", "", filename)
-    filename = re.sub(r"[-\s]+", "_", filename)
-    return filename.strip("_")[:100] or "video"
-
-
-def _common_ydl_opts() -> Dict[str, Any]:
+def _common_ydl_opts() -> dict[str, Any]:
     return {
         "quiet": True,
         "no_warnings": True,
@@ -137,6 +137,7 @@ def index():
 
 
 @downloader_bp.route("/info", methods=["GET"])
+@json_endpoint
 @limiter.limit("20 per minute")
 def get_video_info():
     url = request.args.get("url", "").strip()
@@ -160,11 +161,7 @@ def get_video_info():
                     "title": info.get("title", "Titre non disponible"),
                     "duration": info.get("duration", 0),
                     "thumbnail": info.get("thumbnail"),
-                    "channel": (
-                        info.get("uploader")
-                        or info.get("channel")
-                        or "Source inconnue"
-                    ),
+                    "channel": (info.get("uploader") or info.get("channel") or "Source inconnue"),
                     "views": info.get("view_count", 0),
                     "description": (description[:200] + "...") if description else "",
                     "id": info.get("id"),
@@ -180,18 +177,22 @@ def get_video_info():
 
 
 @downloader_bp.route("/download", methods=["POST"])
+@json_endpoint
 @limiter.limit("3 per minute;30 per hour")
 def download_video():
-    ffmpeg_path = Config.get_ffmpeg_path()
-    if not ffmpeg_path:
-        return jsonify({"error": "FFmpeg requis et introuvable."}), 500
-
+    # Validation de la requête d'abord (400), avant la vérification de la
+    # capacité serveur FFmpeg (500) : une requête invalide reste un 400 même
+    # si FFmpeg est absent.
     data = request.get_json(silent=True) or {}
     url = (data.get("url") or "").strip()
     if not url:
         return jsonify({"error": "URL manquante."}), 400
     if not _is_allowed_url(url):
         return jsonify(_REJECTION_PAYLOAD), 400
+
+    ffmpeg_path = Config.get_ffmpeg_path()
+    if not ffmpeg_path:
+        return jsonify({"error": "FFmpeg requis et introuvable."}), 500
 
     format_type = data.get("format", "video")
     quality = data.get("quality", "highest")
@@ -263,7 +264,7 @@ def download_video():
                 "Downloader ok: %s (%.2f MB)", os.path.basename(filepath), size_mb
             )
 
-            safe_title = _sanitize_filename(info.get("title", "video"))
+            safe_title = sanitize_filename(info.get("title", "video"), fallback="video")
             ext = "mp3" if format_type == "audio" else "mp4"
             return send_file(
                 filepath,

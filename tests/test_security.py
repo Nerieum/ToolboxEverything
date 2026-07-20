@@ -1,13 +1,12 @@
 """Tests des couches de sécurité (headers, rate limit, uploads, whitelist yt-dlp).
 
-Ces tests couvrent la surface ajoutée en v1.3.1. Ils ne dépendent pas de
+Ces tests couvrent la surface ajoutée en v1.3.2. Ils ne dépendent pas de
 Redis : le limiter tombe sur `memory://` en test (cf. conftest).
 """
 
 from __future__ import annotations
 
 import io
-from typing import Iterable
 
 import pytest
 
@@ -80,6 +79,13 @@ class TestSecurityHeaders:
         nonce2 = csp2.split("'nonce-", 1)[1].split("'", 1)[0]
         assert nonce1 and nonce2 and nonce1 != nonce2
 
+    def test_hsts_only_on_https(self, client):
+        # HTTP : pas de HSTS.
+        assert "Strict-Transport-Security" not in client.get("/").headers
+        # HTTPS (simulé via base_url) : HSTS présent.
+        secure = client.get("/", base_url="https://localhost")
+        assert "Strict-Transport-Security" in secure.headers
+
 
 # ─────────────────────────────────────────────────────────────
 # Validation des uploads (magic bytes)
@@ -143,31 +149,37 @@ class TestBatchValidation:
 
 
 class TestYtdlpUrlWhitelist:
-    @pytest.mark.parametrize("url", [
-        "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        "https://youtu.be/dQw4w9WgXcQ",
-        "https://m.youtube.com/watch?v=x",
-        "https://music.youtube.com/playlist?list=x",
-        "https://vimeo.com/123456",
-        "https://player.vimeo.com/video/123",
-        "https://www.dailymotion.com/video/x",
-        "https://dai.ly/x",
-        "https://www.tiktok.com/@user/video/123",
-        "https://vm.tiktok.com/ABC123",
-    ])
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+            "https://youtu.be/dQw4w9WgXcQ",
+            "https://m.youtube.com/watch?v=x",
+            "https://music.youtube.com/playlist?list=x",
+            "https://vimeo.com/123456",
+            "https://player.vimeo.com/video/123",
+            "https://www.dailymotion.com/video/x",
+            "https://dai.ly/x",
+            "https://www.tiktok.com/@user/video/123",
+            "https://vm.tiktok.com/ABC123",
+        ],
+    )
     def test_allowed(self, url: str):
         assert _is_allowed_url(url), f"{url} devrait être autorisé"
 
-    @pytest.mark.parametrize("url", [
-        "https://evil.example.com/steal",
-        "http://malware.ru/bitcoin-miner",
-        "javascript:alert(1)",
-        "file:///etc/passwd",
-        "ftp://internal.corp/leak",
-        "",
-        "not a url",
-        "https://youtube.com.attacker.example.com/",
-    ])
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "https://evil.example.com/steal",
+            "http://malware.ru/bitcoin-miner",
+            "javascript:alert(1)",
+            "file:///etc/passwd",
+            "ftp://internal.corp/leak",
+            "",
+            "not a url",
+            "https://youtube.com.attacker.example.com/",
+        ],
+    )
     def test_rejected(self, url: str):
         assert not _is_allowed_url(url), f"{url} ne devrait pas être autorisé"
 
@@ -203,12 +215,10 @@ class TestRateLimit:
         for _ in range(22):
             statuses.append(client.get(f"/downloader/info?url={bad_url}").status_code)
 
-        assert statuses[:20].count(400) == 20, (
-            f"Les 20 premières devraient être 400 (URL rejected), got {statuses[:20]}"
-        )
-        assert 429 in statuses[20:], (
-            f"Le rate limit aurait dû déclencher 429, got {statuses[20:]}"
-        )
+        assert (
+            statuses[:20].count(400) == 20
+        ), f"Les 20 premières devraient être 400 (URL rejected), got {statuses[:20]}"
+        assert 429 in statuses[20:], f"Le rate limit aurait dû déclencher 429, got {statuses[20:]}"
 
     def test_ratelimit_response_is_json_for_api_routes(self, client):
         bad_url = "https://evil.example.com/vid"

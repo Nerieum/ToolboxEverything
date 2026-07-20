@@ -1,6 +1,6 @@
 """Validation des uploads média (stdlib only).
 
-Historiquement assurée par `app/core/security.py` (supprimé en v1.3.1
+Historiquement assurée par `app/core/security.py` (supprimé en v1.3.2
 car jamais branché sur les routes). Ré-implémentation minimale, testée,
 et effectivement appliquée par `media_converter/routes.py`.
 
@@ -18,26 +18,29 @@ whitelist très étroite.
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, Optional, Set
+from collections.abc import Iterable
 
 from werkzeug.datastructures import FileStorage
 
-MAX_BATCH_FILES: int = 20
-MAX_BATCH_BYTES: int = 200 * 1024 * 1024  # 200 MB cumulés
-MAX_UPLOAD_BYTES: int = 512 * 1024 * 1024  # 512 MB par fichier
+from config import Config
+
+# Limites dérivées de la config (source unique) — plus de valeurs en double.
+MAX_BATCH_FILES: int = Config.MAX_BATCH_SIZE
+MAX_BATCH_BYTES: int = Config.MAX_BATCH_BYTES  # taille cumulée d'un batch
+MAX_UPLOAD_BYTES: int = Config.MAX_CONTENT_LENGTH  # taille max par fichier
 MAGIC_SNIFF_BYTES: int = 32
 
-_SIGNATURES: Dict[str, tuple[bytes, ...]] = {
-    "jpg":  (b"\xff\xd8\xff",),
+_SIGNATURES: dict[str, tuple[bytes, ...]] = {
+    "jpg": (b"\xff\xd8\xff",),
     "jpeg": (b"\xff\xd8\xff",),
-    "png":  (b"\x89PNG\r\n\x1a\n",),
-    "gif":  (b"GIF87a", b"GIF89a"),
+    "png": (b"\x89PNG\r\n\x1a\n",),
+    "gif": (b"GIF87a", b"GIF89a"),
     "webp": (b"RIFF",),
-    "mp4":  (b"ftyp",),
-    "mov":  (b"ftyp",),
+    "mp4": (b"ftyp",),
+    "mov": (b"ftyp",),
     "webm": (b"\x1a\x45\xdf\xa3",),
-    "mkv":  (b"\x1a\x45\xdf\xa3",),
-    "avi":  (b"RIFF",),
+    "mkv": (b"\x1a\x45\xdf\xa3",),
+    "avi": (b"RIFF",),
 }
 
 
@@ -137,13 +140,11 @@ def validate_batch(
     if not files:
         raise UploadRejected("Aucun fichier reçu.")
     if len(files) > max_files:
-        raise UploadRejected(
-            f"Trop de fichiers ({len(files)}, max {max_files} par batch)."
-        )
+        raise UploadRejected(f"Trop de fichiers ({len(files)}, max {max_files} par batch).")
 
     validated: list[tuple[FileStorage, str]] = []
     cumulative = 0
-    allowed_set: Set[str] = set(allowed_extensions)
+    allowed_set: set[str] = set(allowed_extensions)
 
     for f in files:
         if not f or not f.filename:
@@ -170,7 +171,7 @@ def validate_batch(
     return validated
 
 
-def configure_pillow_limits(max_pixels: Optional[int] = 50_000_000) -> None:
+def configure_pillow_limits(max_pixels: int | None = 50_000_000) -> None:
     """Plafonne la taille d'image décompressée par Pillow (anti-zip-bomb).
 
     Sans limite, une image 50000×50000 peut allouer 10 GB de RAM.

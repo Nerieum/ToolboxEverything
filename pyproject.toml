@@ -1,0 +1,55 @@
+# =====================================================
+# Toolbox Everything — configuration outillage centralisée
+#
+# Source unique pour ruff (lint + import sort), black (format) et pytest.
+# Remplace .flake8 + pytest.ini + les flags épars du Makefile.
+# =====================================================
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [
+    "app/static",
+    "bin",
+    ".venv",
+    "venv",
+]
+
+[tool.ruff.lint]
+# E/W (pycodestyle), F (pyflakes), I (isort), UP (pyupgrade),
+# B (bugbear), C4 (comprehensions), SIM (simplify).
+select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    "E203",  # espace avant ':' — géré par black
+    "E501",  # longueur de ligne — black s'en charge, on n'échoue pas dessus
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Les __init__.py ré-exportent volontairement des symboles.
+"__init__.py" = ["F401", "F403"]
+# Les tests peuvent utiliser des fixtures/imports non « utilisés ».
+"tests/*" = ["F401", "F811"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app", "config"]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+extend-exclude = "app/static|bin|\\.venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra -q --strict-markers"
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+python_classes = ["Test*"]
+filterwarnings = ["ignore::DeprecationWarning:werkzeug"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = ["app/static/*", "tests/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

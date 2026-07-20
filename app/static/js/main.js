@@ -1,81 +1,71 @@
-// Configuration globale
-const NOTIFICATION_DURATION = 3000;
-const NOTIFICATION_TYPES = { ERROR: 'error', SUCCESS: 'success' };
+// =====================================================================
+// Toolbox Everything — utilitaires globaux (vanilla JS, pas de bundler)
+//
+// Source unique des notifications (toasts). Les templates appellent
+// `showNotification(message, type)` ou `window.Toolbox.notify(...)`.
+// Le style vient de `.toast` dans style.css (piloté par les tokens).
+// =====================================================================
 
-// Creation de notification
-const createNotification = (message, type = NOTIFICATION_TYPES.SUCCESS) => {
-    const element = document.createElement('div');
-    element.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
-        type === NOTIFICATION_TYPES.ERROR ? 'bg-red-500' : 'bg-green-500'
-    } text-white z-50 transform translate-x-full transition-transform duration-300`;
-    element.textContent = message;
-    
-    document.body.appendChild(element);
-    
-    // Animation d'entrée
-    requestAnimationFrame(() => {
-        element.classList.remove('translate-x-full');
-    });
-    
-    // Suppression automatique
-    setTimeout(() => {
-        element.classList.add('translate-x-full');
-        setTimeout(() => {
-            if (element.parentNode) {
-                element.remove();
-            }
-        }, 300);
-    }, NOTIFICATION_DURATION);
+const NOTIFICATION_DURATION = 3200;
+
+const TOAST_ICONS = {
+    success: "fa-circle-check",
+    error: "fa-circle-exclamation",
+    info: "fa-circle-info",
+    warning: "fa-triangle-exclamation",
 };
 
-// Fonction globale compatible avec les templates existants
-function showNotification(message, type = 'success') {
-    const notificationsContainer = document.getElementById('notifications');
-    if (!notificationsContainer) {
-        // Fallback si le conteneur n'existe pas
-        createNotification(message, type);
-        return;
+function ensureToastContainer() {
+    let container = document.getElementById("notifications");
+    if (!container) {
+        container = document.createElement("div");
+        container.id = "notifications";
+        container.className = "fixed top-4 right-4 z-50 space-y-2";
+        document.body.appendChild(container);
     }
-    
-    const notification = document.createElement('div');
-    notification.className = `p-4 rounded-lg shadow-lg mb-2 transform translate-x-full transition-all duration-300 ${
-        type === 'error' ? 'bg-red-500' : 'bg-green-500'
-    } text-white`;
-    notification.textContent = message;
-    
-    notificationsContainer.appendChild(notification);
-    
-    // Animation d'entrée
-    requestAnimationFrame(() => {
-        notification.classList.remove('translate-x-full');
-    });
-    
-    // Suppression automatique
-    setTimeout(() => {
-        notification.classList.add('translate-x-full');
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 300);
-    }, NOTIFICATION_DURATION);
+    return container;
 }
 
-// Gestionnaire d'erreurs global
+function notify(message, type = "success", duration = NOTIFICATION_DURATION) {
+    const container = ensureToastContainer();
+    const kind = TOAST_ICONS[type] ? type : "info";
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast--${kind}`;
+    toast.setAttribute("role", kind === "error" ? "alert" : "status");
+
+    const icon = document.createElement("i");
+    icon.className = `toast__icon fas ${TOAST_ICONS[kind]}`;
+    icon.setAttribute("aria-hidden", "true");
+
+    const text = document.createElement("span");
+    text.textContent = message;
+
+    toast.append(icon, text);
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add("is-visible"));
+
+    window.setTimeout(() => {
+        toast.classList.remove("is-visible");
+        window.setTimeout(() => toast.remove(), 220);
+    }, duration);
+
+    return toast;
+}
+
+// Compat : ancien nom global utilisé par plusieurs templates.
+function showNotification(message, type = "success") {
+    return notify(message, type);
+}
+
 const handleError = (error) => {
-    console.error('Error:', error);
-    showNotification(error.message || 'Une erreur est survenue', NOTIFICATION_TYPES.ERROR);
+    console.error("Error:", error);
+    notify(error?.message || "Une erreur est survenue", "error");
 };
 
-// Utilitaires pour les formulaires
 const FormUtils = {
-    // Validation d'email
-    validateEmail: (email) => {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
-    },
-    
-    // Validation d'URL
+    validateEmail: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
     validateURL: (url) => {
         try {
             new URL(url);
@@ -84,43 +74,23 @@ const FormUtils = {
             return false;
         }
     },
-    
-    // Sérialisation de formulaire
-    serializeForm: (form) => {
-        const formData = new FormData(form);
-        const data = {};
-        for (let [key, value] of formData.entries()) {
-            data[key] = value;
-        }
-        return data;
-    }
+    serializeForm: (form) => Object.fromEntries(new FormData(form).entries()),
 };
 
-// Utilitaires pour les fichiers
 const FileUtils = {
-    // Formatage de taille de fichier
     formatFileSize: (bytes) => {
-        if (bytes === 0) return '0 Bytes';
+        if (!bytes) return "0 Bytes";
         const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const sizes = ["Bytes", "KB", "MB", "GB"];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
     },
-    
-    // Validation de type de fichier
-    isValidFileType: (file, allowedTypes) => {
-        return allowedTypes.includes(file.type);
-    }
+    isValidFileType: (file, allowedTypes) => allowedTypes.includes(file.type),
 };
 
-// Export pour utilisation en modules ES6
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { createNotification, handleError, showNotification, FormUtils, FileUtils };
-}
-
-// Export pour utilisation globale
+// API publique.
+window.Toolbox = { notify, handleError, FormUtils, FileUtils };
 window.showNotification = showNotification;
-window.createNotification = createNotification;
 window.handleError = handleError;
 window.FormUtils = FormUtils;
 window.FileUtils = FileUtils;

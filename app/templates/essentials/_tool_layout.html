@@ -52,9 +52,9 @@
         defer></script>
 {% endfor %}
 
-<script src="{{ url_for('static', filename='js/essentials/_common.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/essentials/_common.js', v=asset_version) }}" defer></script>
 
 {% block tool_script_tag %}
-<script src="{{ url_for('static', filename='js/essentials/' ~ tool.slug ~ '.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/essentials/' ~ tool.slug ~ '.js', v=asset_version) }}" defer></script>
 {% endblock %}
 {% endblock %}

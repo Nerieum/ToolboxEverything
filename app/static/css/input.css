@@ -4,9 +4,11 @@
  * Ne jamais editer directement `tailwind.css`; il est regenere a chaque build.
  */
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config "../../../tailwind.config.js";
+@import "tailwindcss" source(none);
+@source "../../templates/**/*.html";
+@source "../js/**/*.js";
+@source "../../services/**/*.py";
 
 /* Styles globaux micro */
 @layer base {

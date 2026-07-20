@@ -1,47 +1,56 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-gray-50 dark:bg-gray-900">
+<html lang="fr" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Toolbox Everything, téléchargeur vidéo, convertisseur média, outils essentiels, speedtest et outils PDF.">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#f3f3f0">
     <title>{% block title %}Toolbox Everything{% endblock %}</title>
 
     {# Logo / favicons #}
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo.svg') }}">
-    <link rel="mask-icon" href="{{ url_for('static', filename='img/logo.svg') }}" color="#2563eb">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg', v=asset_version) }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/logo.svg', v=asset_version) }}">
+    <link rel="mask-icon" href="{{ url_for('static', filename='img/logo.svg', v=asset_version) }}" color="#2544d8">
 
     {# Open Graph / Twitter #}
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Toolbox Everything">
     <meta property="og:title" content="Toolbox Everything">
     <meta property="og:description" content="Boîte à outils web : téléchargement vidéo, conversion média, outils essentiels et 150+ opérations PDF.">
-    <meta property="og:image" content="{{ url_for('static', filename='img/logo-filled.svg', _external=True) }}">
+    <meta property="og:image" content="{{ url_for('static', filename='img/logo-filled.svg', v=asset_version, _external=True) }}">
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="Toolbox Everything">
     <meta name="twitter:description" content="Téléchargement, conversion, outils essentiels, speedtest et PDF.">
-    <meta name="twitter:image" content="{{ url_for('static', filename='img/logo-filled.svg', _external=True) }}">
+    <meta name="twitter:image" content="{{ url_for('static', filename='img/logo-filled.svg', v=asset_version, _external=True) }}">
     <script nonce="{{ csp_nonce }}">
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        const storedTheme = (() => {
+            try {
+                return localStorage.getItem('theme');
+            } catch {
+                return null;
+            }
+        })();
+
+        if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark');
-            document.documentElement.style.backgroundColor = '#111827';
+            document.documentElement.style.backgroundColor = '#0e0f13';
         } else {
             document.documentElement.classList.remove('dark');
-            document.documentElement.style.backgroundColor = '#f9fafb';
+            document.documentElement.style.backgroundColor = '#f3f3f0';
         }
     </script>
 
-    <link rel="preload" href="{{ url_for('static', filename='css/tailwind.css') }}" as="style">
-    <link rel="preload" href="{{ url_for('static', filename='vendor/fontawesome/css/all.min.css') }}" as="style">
-    <link rel="preload" href="{{ url_for('static', filename='css/style.css') }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='vendor/fonts/fraunces-var.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ url_for('static', filename='css/tailwind.css', v=asset_version) }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='vendor/fontawesome/css/all.min.css', v=asset_version) }}" as="style">
+    <link rel="preload" href="{{ url_for('static', filename='css/style.css', v=asset_version) }}" as="style">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fontawesome/css/all.min.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css', v=asset_version) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fontawesome/css/all.min.css', v=asset_version) }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v=asset_version) }}">
 </head>
-<body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-    <div class="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+<body class="min-h-screen transition-colors duration-300">
+    <div class="min-h-screen flex flex-col">
         {% set endpoint = request.endpoint or '' %}
         {% set is_home = endpoint == 'index' %}
         {% set is_downloader = endpoint.startswith('downloader.') %}
@@ -58,7 +67,7 @@
                     <div class="site-header__lead">
                         <a href="{{ url_for('index') }}" class="site-brand" aria-label="Accueil Toolbox Everything">
                             <span class="site-brand__mark site-brand__mark--logo">
-                                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" class="site-brand__logo" width="44" height="44" loading="eager" decoding="async">
+                                <img src="{{ url_for('static', filename='img/logo.svg', v=asset_version) }}" alt="" class="site-brand__logo" width="44" height="44" loading="eager" decoding="async">
                             </span>
                             <span class="site-brand__copy">
                                 <span class="site-brand__name">
@@ -139,9 +148,9 @@
                     </div>
 
                     <div class="site-header__actions">
-                        <button type="button" id="themeToggle" class="header-icon-button" aria-label="Changer le thème">
-                            <i class="fas fa-sun hidden dark:inline text-sm"></i>
-                            <i class="fas fa-moon dark:hidden text-sm"></i>
+                        <button type="button" id="themeToggle" class="header-icon-button theme-toggle" aria-label="Changer le thème" aria-pressed="false">
+                            <i class="fas fa-sun theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true"></i>
+                            <i class="fas fa-moon theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true"></i>
                         </button>
 
                         <button type="button" id="mobileMenuBtn" class="header-icon-button header-icon-button--mobile" aria-label="Ouvrir le menu principal" aria-controls="mobileMenu" aria-expanded="false">
@@ -151,7 +160,7 @@
                 </div>
             </div>
 
-            <div id="mobileMenu" class="mobile-menu hidden lg:hidden" aria-hidden="true">
+            <div id="mobileMenu" class="mobile-menu hidden" aria-hidden="true">
                 <button type="button" id="mobileMenuBackdrop" class="mobile-menu__backdrop" aria-label="Fermer le menu"></button>
                 <div class="mx-auto max-w-7xl px-4 sm:px-6">
                     <div class="mobile-menu__panel">
@@ -206,20 +215,18 @@
             </div>
         </nav>
 
-        <main class="flex-grow bg-gray-50 dark:bg-gray-900">
+        <main class="flex-grow">
             <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 mobile-optimized">
                 {% block content %}{% endblock %}
-                
-
-                {% block tools_features %}{% endblock %}
             </div>
         </main>
 
-        <footer class="mt-auto border-t border-gray-200 dark:border-gray-800">
-            <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+        <footer class="site-footer">
+            <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8 site-footer__row">
                 <span>© {{ current_year }} · v{{ app_version }}</span>
+                <span class="site-footer__motto">Tout sous la main.</span>
                 <a href="https://github.com/doalou/toolbox_everything" target="_blank" rel="noopener noreferrer"
-                   class="hover:text-gray-900 dark:hover:text-white" aria-label="GitHub">
+                   class="site-footer__link" aria-label="GitHub">
                     <i class="fab fa-github text-lg"></i>
                 </a>
             </div>
@@ -228,130 +235,7 @@
 
     <div id="notifications" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    <script nonce="{{ csp_nonce }}">
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => {
-                document.body.classList.add('loaded');
-            }, 10);
-
-            const themeToggle = document.getElementById('themeToggle');
-            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-            const mobileMenu = document.getElementById('mobileMenu');
-            const mobileMenuBackdrop = document.getElementById('mobileMenuBackdrop');
-            let mobileMenuHideTimer = null;
-
-            const setTheme = (theme) => {
-                const isDark = theme === 'dark';
-                document.documentElement.classList.toggle('dark', isDark);
-                document.documentElement.style.backgroundColor = isDark ? '#111827' : '#f9fafb';
-                localStorage.theme = theme;
-            };
-
-            if (themeToggle) {
-                themeToggle.addEventListener('click', () => {
-                    setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark');
-                });
-            }
-
-            const openMobileMenu = () => {
-                if (!mobileMenu) {
-                    return;
-                }
-
-                if (mobileMenuHideTimer) {
-                    clearTimeout(mobileMenuHideTimer);
-                }
-
-                mobileMenu.classList.remove('hidden');
-                mobileMenu.setAttribute('aria-hidden', 'false');
-                document.body.classList.add('mobile-menu-open');
-
-                if (mobileMenuBtn) {
-                    mobileMenuBtn.setAttribute('aria-expanded', 'true');
-                }
-
-                window.requestAnimationFrame(() => {
-                    mobileMenu.classList.add('is-open');
-                });
-            };
-
-            const closeMobileMenu = (immediate = false) => {
-                if (!mobileMenu || mobileMenu.classList.contains('hidden')) {
-                    return;
-                }
-
-                mobileMenu.classList.remove('is-open');
-                mobileMenu.setAttribute('aria-hidden', 'true');
-                document.body.classList.remove('mobile-menu-open');
-
-                if (mobileMenuBtn) {
-                    mobileMenuBtn.setAttribute('aria-expanded', 'false');
-                }
-
-                if (mobileMenuHideTimer) {
-                    clearTimeout(mobileMenuHideTimer);
-                }
-
-                const finalizeClose = () => {
-                    mobileMenu.classList.add('hidden');
-                };
-
-                if (immediate) {
-                    finalizeClose();
-                    return;
-                }
-
-                mobileMenuHideTimer = window.setTimeout(finalizeClose, 180);
-            };
-
-            if (mobileMenuBtn && mobileMenu) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    if (mobileMenu.classList.contains('hidden')) {
-                        openMobileMenu();
-                    } else {
-                        closeMobileMenu();
-                    }
-                });
-            }
-
-            if (mobileMenuBackdrop) {
-                mobileMenuBackdrop.addEventListener('click', () => closeMobileMenu());
-            }
-
-            document.querySelectorAll('[data-close-mobile-menu]').forEach((link) => {
-                link.addEventListener('click', () => closeMobileMenu(true));
-            });
-
-            document.querySelectorAll('[data-mobile-submenu-toggle]').forEach((toggleButton) => {
-                toggleButton.addEventListener('click', () => {
-                    const id = toggleButton.dataset.mobileSubmenuToggle;
-                    const submenu = document.getElementById(`${id}-submenu`);
-                    const chevron = document.getElementById(`${id}-chevron`);
-
-                    if (!submenu) {
-                        return;
-                    }
-
-                    submenu.classList.toggle('hidden');
-                    const isExpanded = !submenu.classList.contains('hidden');
-                    chevron?.classList.toggle('rotate-180', isExpanded);
-                    toggleButton.setAttribute('aria-expanded', String(isExpanded));
-                });
-            });
-
-            window.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape') {
-                    closeMobileMenu();
-                }
-            });
-
-            window.addEventListener('resize', () => {
-                if (window.innerWidth >= 1024) {
-                    closeMobileMenu(true);
-                }
-            });
-        });
-    </script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/shell.js', v=asset_version) }}" defer></script>
+    <script src="{{ url_for('static', filename='js/main.js', v=asset_version) }}" defer></script>
 </body>
 </html>

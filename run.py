@@ -30,7 +30,13 @@ def _create_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--dev", action="store_true", help="Mode développement (debug + reloader)")
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
-    parser.add_argument("--host", type=str, default=os.environ.get("HOST", "0.0.0.0"))
+    # Par défaut, le serveur de développement reste local. HOST=0.0.0.0 permet
+    # explicitement un accès LAN ; Docker utilise directement Gunicorn.
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=os.environ.get("HOST", "127.0.0.1"),
+    )
     parser.add_argument("--no-banner", action="store_true", help="Ne pas imprimer la bannière")
     parser.add_argument("--version", action="version", version=f"Toolbox Everything v{__version__}")
     return parser
@@ -47,10 +53,10 @@ def _build_app(print_banner: bool):
     return create_app()
 
 
-# Objet exposé à Gunicorn (« run:app »). Pas de bannière ici : gunicorn crée
-# plusieurs workers, on veut l'afficher une seule fois via un hook externe ou
-# en laissant Docker/prod utiliser ses propres logs.
-app = _build_app(print_banner=False)
+# Objet exposé à Gunicorn (« run:app »). En lancement direct, on évite de
+# construire inutilement une première app avant celle configurée par `main()`.
+if __name__ != "__main__":
+    app = _build_app(print_banner=False)
 
 
 def main() -> None:

@@ -1,21 +1,22 @@
 {% extends 'base.html' %}
 
+{% block title %}Requête invalide | Toolbox Everything{% endblock %}
+
 {% block content %}
-<div class="min-h-[50vh] flex items-center justify-center px-4">
-    <div class="text-center">
-        <div class="text-6xl font-bold text-red-500 mb-4">400</div>
-        <h1 class="text-3xl font-semibold text-gray-900 dark:text-white mb-4">
-            Requête invalide
-        </h1>
-        <p class="text-gray-600 dark:text-gray-400 mb-8">
-            La requête envoyée au serveur est invalide ou mal formatée.
+<section class="error-page">
+    <div>
+        <div class="error-page__code error-page__code--warn">400</div>
+        <h1 class="error-page__title">Requête invalide</h1>
+        <p class="error-page__text">
+            La requête envoyée au serveur est invalide ou mal formatée. Vérifiez les
+            données et réessayez.
         </p>
-        <a href="{{ url_for('index') }}" 
-           class="inline-flex items-center px-6 py-3 rounded-lg bg-primary-600 hover:bg-primary-700 
-                  text-white transition-all duration-300">
-            <i class="fas fa-home mr-2"></i>
-            Retour à l'accueil
-        </a>
+        <div class="error-page__actions">
+            <a href="{{ url_for('index') }}" class="tool-btn tool-btn--indigo">
+                <i class="fas fa-house text-xs" aria-hidden="true"></i>
+                <span>Retour à l'accueil</span>
+            </a>
+        </div>
     </div>
-</div>
+</section>
 {% endblock %}

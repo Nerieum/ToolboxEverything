@@ -7,23 +7,20 @@
 #        docker compose up -d --build
 #
 #   2) IMAGE GHCR (prod) :
-#        export TOOLBOX_IMAGE=ghcr.io/doalou/toolbox_everything:1.3.1
+#        export TOOLBOX_IMAGE=ghcr.io/doalou/toolbox_everything:2.0.0
 #        docker compose pull
 #        docker compose up -d
 #
-# Si TOOLBOX_IMAGE n'est pas défini, le tag local
-# `toolbox-everything:${APP_VERSION}` est utilisé et la
-# section build prend le relais.
+# Si TOOLBOX_IMAGE n'est pas défini, Compose utilise le tag
+# `toolbox-everything:local` et la section build prend le relais.
 # =====================================================
 
 services:
   toolbox:
-    image: ${TOOLBOX_IMAGE:-ghcr.io/doalou/toolbox_everything:${APP_VERSION:-1.3.1}}
+    image: ${TOOLBOX_IMAGE:-toolbox-everything:local}
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        APP_VERSION: ${APP_VERSION:-1.3.1}
     container_name: toolbox-everything
     ports:
       - "${TOOLBOX_PORT:-8000}:8000"
@@ -35,7 +32,6 @@ services:
       - FLASK_APP=run.py
       - FLASK_ENV=${FLASK_ENV:-production}
       - PYTHONUNBUFFERED=1
-      - APP_VERSION=${APP_VERSION:-1.3.1}
       # URL interne (réseau Docker) utilisée par le healthcheck /health
       - STIRLING_PDF_URL=${STIRLING_PDF_URL:-http://stirling-pdf:8080}
       # URL publique utilisée par l'iframe côté navigateur
@@ -54,7 +50,13 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen("http://localhost:8000/health", timeout=5)
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,26 +75,29 @@ services:
   # ---------------------------------------------------------------
   # Stirling PDF — configuré en mode AMNÉSIQUE (instance publique).
   #
-  # - Aucune donnée utilisateur persistée : /configs et /logs sont
-  #   en tmpfs (RAM) et effacés à chaque restart du container.
+  # - Tous les répertoires susceptibles de contenir des documents ou des
+  #   profils de traitement sont en tmpfs (RAM) et effacés au redémarrage.
   # - Aucune analytics/télémétrie (PostHog, Scarf, Google).
   # - Fichiers temporaires nettoyés agressivement (1h max, cycle 5min).
   # - Pas d'audit log, pas d'URL-to-PDF (risque SSRF), pas de storage
   #   utilisateur.
-  # - Seul le volume `stirling_tessdata` est persistant (modèles OCR
-  #   de Tesseract, données statiques — pas des documents utilisateur).
+  # - Aucun volume Docker : même les modèles OCR restent ceux embarqués
+  #   dans l'image, sans copie persistante sur l'hôte.
   # ---------------------------------------------------------------
   stirling-pdf:
-    image: stirlingtools/stirling-pdf:latest
+    image: stirlingtools/stirling-pdf:2.14.2
     container_name: toolbox-stirling-pdf
     ports:
       - "${STIRLING_PORT:-8080}:8080"
     environment:
       # --- Sécurité / authentification ---
-      - DOCKER_ENABLE_SECURITY=false
+      - DISABLE_ADDITIONAL_FEATURES=true
       - SECURITY_ENABLELOGIN=false
+      - SYSTEM_SHOWSETTINGSWHENNOLOGIN=false
+      - SYSTEM_SERVERCERTIFICATE_ENABLED=false
       # X-Frame-Options auto-DISABLED quand login off, OK pour iframe
       - STORAGE_ENABLED=false
+      - STORAGE_SHARING_ENABLED=false
 
       # --- UI / locale ---
       - SYSTEM_DEFAULTLOCALE=fr-FR
@@ -110,6 +115,11 @@ services:
       - METRICS_ENABLED=false
 
       # --- Nettoyage agressif des fichiers temporaires ---
+      - STIRLING_TEMPFILES_DIRECTORY=/tmp/stirling-pdf
+      - TMPDIR=/tmp/stirling-pdf
+      - SYSTEM_TEMPFILEMANAGEMENT_BASETMPDIR=/tmp/stirling-pdf
+      - SYSTEM_TEMPFILEMANAGEMENT_LIBREOFFICEDIR=/tmp/stirling-pdf/libreoffice
+      - SYSTEM_TEMPFILEMANAGEMENT_SYSTEMTEMPDIR=/tmp
       - SYSTEM_TEMPFILEMANAGEMENT_MAXAGEHOURS=1
       - SYSTEM_TEMPFILEMANAGEMENT_CLEANUPINTERVALMINUTES=5
       - SYSTEM_TEMPFILEMANAGEMENT_STARTUPCLEANUP=true
@@ -120,17 +130,17 @@ services:
       - SYSTEM_ENABLEMOBILESCANNER=false
       - PREMIUM_PROFEATURES_AUDIT_ENABLED=false
       - PREMIUM_ENTERPRISEFEATURES_AUDIT_ENABLED=false
-    volumes:
-      # Seul volume persistant : données statiques OCR Tesseract
-      - stirling_tessdata:/usr/share/tessdata
     tmpfs:
-      # /configs et /logs en RAM — effacés à chaque restart
-      - /configs:size=64M,mode=1777
+      # Configuration générée, base interne et logs : RAM uniquement.
+      - /configs:size=128M,mode=1777
       - /logs:size=64M,mode=1777
-      # /tmp également en RAM pour que les fichiers uploadés ne
-      # touchent jamais le disque hôte
+      # Répertoires fonctionnels pouvant recevoir des documents.
+      - /customFiles:size=64M,mode=1777
+      - /home/stirlingpdfuser:size=256M,mode=1777
+      - /pipeline:size=256M,mode=1777
+      - /storage:size=64M,mode=1777
+      # Uploads et traitements temporaires : RAM uniquement.
       - /tmp:size=512M,mode=1777
-    read_only: false
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
@@ -186,7 +196,7 @@ services:
   #   risque d'OOM, les clés expirées sont évincées automatiquement.
   # ---------------------------------------------------------------
   redis:
-    image: redis:7.4-alpine
+    image: redis:8.8.0-alpine
     container_name: toolbox-redis
     command:
       - redis-server
@@ -223,5 +233,3 @@ volumes:
   toolbox_uploads:
   toolbox_downloads:
   toolbox_logs:
-  # Données OCR statiques Tesseract — pas de données utilisateur
-  stirling_tessdata:

@@ -19,8 +19,8 @@ TOOL = register_tool(
         category="generate",
         external_scripts=(
             ExternalScript(
-                src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js",
-                integrity="sha384-lQXOAyZwHXE55JFyrOMB7nY2Wv+m5ZWNtJcHrd1rceRQXAYNLak8ukN5TjBTcIwz",
+                src="https://cdn.jsdelivr.net/npm/qrcode-generator@2.0.4/dist/qrcode.min.js",
+                integrity="sha384-o5vdFlIHJf1L/hUFEtj8tgNVtCT+02DKNT3MPA47wJ9Eo5HocC7qCL2YL+sWNsk8",
             ),
         ),
     )

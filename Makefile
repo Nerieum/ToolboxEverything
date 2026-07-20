@@ -7,9 +7,9 @@ PYTHON := python
 PIP := pip
 FLASK_APP := run.py
 PORT := 8000
-APP_VERSION := $(shell if [ -f VERSION ]; then tr -d '\r\n' < VERSION; else grep -s '^APP_VERSION=' .env | cut -d= -f2 || echo "1.3.1"; fi)
+VERSION := $(shell if [ -f VERSION ]; then tr -d '\r\n' < VERSION; else echo "0.0.0"; fi)
 GHCR_IMAGE ?= ghcr.io/doalou/toolbox_everything
-TAILWIND_VERSION := 3.4.13
+TAILWIND_VERSION := 4.3.3
 TAILWIND := $(PYTHON) scripts/tailwind.py
 
 # Couleurs pour l'affichage
@@ -18,7 +18,9 @@ YELLOW := \033[1;33m
 RED := \033[0;31m
 NC := \033[0m # No Color
 
-.PHONY: help install dev run build clean test lint format security check docker-build docker-run tailwind-install tailwind-build tailwind-watch
+.PHONY: help setup install dev run build clean test test-cov lint format security check \
+        docker-build docker-run tailwind-install tailwind-build tailwind-watch \
+        deps-check deps-update freeze
 
 # Affichage de l'aide
 help:
@@ -31,8 +33,8 @@ help:
 	@echo "  $(YELLOW)build$(NC)         - Construction de l'application"
 	@echo "  $(YELLOW)clean$(NC)         - Nettoyage des fichiers temporaires"
 	@echo "  $(YELLOW)test$(NC)          - Exécution des tests"
-	@echo "  $(YELLOW)lint$(NC)          - Vérification du code (flake8)"
-	@echo "  $(YELLOW)format$(NC)        - Formatage du code (black)"
+	@echo "  $(YELLOW)lint$(NC)          - Vérification du code (ruff)"
+	@echo "  $(YELLOW)format$(NC)        - Formatage du code (ruff + black)"
 	@echo "  $(YELLOW)security$(NC)      - Vérification de sécurité (bandit)"
 	@echo "  $(YELLOW)check$(NC)         - Vérifications complètes (lint + security)"
 	@echo "  $(YELLOW)docker-build$(NC)  - Construction de l'image Docker"
@@ -49,7 +51,7 @@ setup: install
 	@mkdir -p logs uploads downloads
 	@if [ ! -f .env ]; then \
 		cp env.example .env; \
-		SECRET=$$(python3 -c "import secrets; print(secrets.token_hex(32))"); \
+		SECRET=$$($(PYTHON) -c "import secrets; print(secrets.token_hex(32))"); \
 		sed -i "s/^SECRET_KEY=.*/SECRET_KEY=$$SECRET/" .env; \
 		echo "$(GREEN)✓ Fichier .env créé avec une SECRET_KEY sécurisée$(NC)"; \
 	else \
@@ -116,24 +118,25 @@ test-cov:
 	@echo "$(YELLOW)Exécution des tests avec couverture...$(NC)"
 	$(PYTHON) -m pytest tests/ -v --cov=app --cov-report=term-missing
 
-# Vérification du code
+# Vérification du code (ruff — config dans pyproject.toml)
 lint:
-	@echo "$(YELLOW)Vérification du code avec flake8...$(NC)"
-	@if command -v flake8 >/dev/null 2>&1; then \
-		flake8 app/ --max-line-length=100 --ignore=E203,W503; \
+	@echo "$(YELLOW)Vérification du code avec ruff...$(NC)"
+	@if command -v ruff >/dev/null 2>&1; then \
+		ruff check .; \
 		echo "$(GREEN)✓ Code vérifié$(NC)"; \
 	else \
-		echo "$(RED)flake8 non installé. Installation: pip install flake8$(NC)"; \
+		echo "$(RED)ruff non installé. Installation: pip install ruff$(NC)"; \
 	fi
 
-# Formatage du code
+# Formatage du code (ruff pour les imports + black — config dans pyproject.toml)
 format:
-	@echo "$(YELLOW)Formatage du code avec black...$(NC)"
-	@if command -v black >/dev/null 2>&1; then \
-		black app/ --line-length=100; \
+	@echo "$(YELLOW)Formatage du code (ruff + black)...$(NC)"
+	@if command -v ruff >/dev/null 2>&1 && command -v black >/dev/null 2>&1; then \
+		ruff check --fix .; \
+		black .; \
 		echo "$(GREEN)✓ Code formaté$(NC)"; \
 	else \
-		echo "$(RED)black non installé. Installation: pip install black$(NC)"; \
+		echo "$(RED)ruff/black non installés. Installation: pip install -r requirements-dev.txt$(NC)"; \
 	fi
 
 # Vérification de sécurité
@@ -153,15 +156,15 @@ check: lint security
 
 # Construction Docker
 docker-build:
-	@echo "$(YELLOW)Construction de l'image Docker (v$(APP_VERSION))...$(NC)"
-	docker build --build-arg APP_VERSION=$(APP_VERSION) -t toolbox-everything:$(APP_VERSION) -t toolbox-everything:latest -t $(GHCR_IMAGE):$(APP_VERSION) -t $(GHCR_IMAGE):latest .
-	@echo "$(GREEN)✓ Image Docker construite (v$(APP_VERSION))$(NC)"
+	@echo "$(YELLOW)Construction de l'image Docker (v$(VERSION))...$(NC)"
+	docker build -t toolbox-everything:$(VERSION) -t toolbox-everything:latest -t $(GHCR_IMAGE):$(VERSION) -t $(GHCR_IMAGE):latest .
+	@echo "$(GREEN)✓ Image Docker construite (v$(VERSION))$(NC)"
 
 # Lancement Docker
 docker-run:
 	@echo "$(YELLOW)Lancement du conteneur Docker...$(NC)"
 	@echo "$(GREEN)Serveur accessible sur http://localhost:$(PORT)$(NC)"
-	docker run -p $(PORT):8000 -e APP_VERSION=$(APP_VERSION) --rm -it toolbox-everything:latest
+	docker run -p $(PORT):8000 --rm -it toolbox-everything:latest
 
 # Vérification des dépendances
 deps-check:

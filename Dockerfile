@@ -5,27 +5,18 @@
 #   2. css-builder  : compile Tailwind (binaire Go standalone, pas de Node)
 #   3. runtime      : image finale, zéro outil de build
 # =====================================================
-ARG APP_VERSION=1.3.1
-ARG TAILWIND_VERSION=3.4.13
+ARG TAILWIND_VERSION=4.3.3
 
 # -----------------------------------------------------
 # 1) Build des deps Python
 # -----------------------------------------------------
 FROM python:3.12-slim AS py-builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    python3-dev \
-    && apt-get upgrade -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # -----------------------------------------------------
 # 2) Build du CSS Tailwind
@@ -53,20 +44,15 @@ RUN python scripts/tailwind.py build && \
 # -----------------------------------------------------
 FROM python:3.12-slim
 
-ARG APP_VERSION
-
 LABEL maintainer="toolbox-everything"
-LABEL version="${APP_VERSION}"
 LABEL description="Toolbox Everything - Une boite a outils web complete"
 LABEL org.opencontainers.image.source="https://github.com/doalou/toolbox_everything"
 LABEL org.opencontainers.image.documentation="https://github.com/doalou/toolbox_everything/README.md"
-LABEL org.opencontainers.image.version="${APP_VERSION}"
 
-# libmagic retiré (plus utilisé). curl conservé pour le healthcheck Docker.
+# FFmpeg est la seule dépendance système du runtime. Le healthcheck utilise
+# urllib (stdlib), donc curl n'est plus nécessaire dans l'image.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
-    curl \
-    && apt-get upgrade -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -75,28 +61,26 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 WORKDIR /app
 
-COPY . .
-# CSS Tailwind généré par le stage css-builder — écrase le .gitignore placeholder si présent
+COPY app ./app
+COPY config.py run.py VERSION ./
+# CSS Tailwind généré par le stage css-builder.
 COPY --from=css-builder /build/app/static/css/tailwind.css /app/app/static/css/tailwind.css
-
-# .env depuis env.example si absent, avec génération automatique de SECRET_KEY
-RUN if [ ! -f .env ]; then cp env.example .env; fi && \
-    SECRET=$(python -c "import secrets; print(secrets.token_hex(32))") && \
-    sed -i "s/^SECRET_KEY=.*/SECRET_KEY=${SECRET}/" .env
-
-RUN mkdir -p uploads/temp logs
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=run.py
 ENV FLASK_ENV=production
 ENV DOCKER_ENV=1
-ENV APP_VERSION=${APP_VERSION}
-
 EXPOSE 8000
 
-RUN groupadd -r toolbox && useradd -r -g toolbox toolbox
-RUN chown -R toolbox:toolbox /app
+RUN groupadd -r toolbox && \
+    useradd -r -g toolbox toolbox && \
+    mkdir -p uploads/temp logs && \
+    chown -R toolbox:toolbox /app
 USER toolbox
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--threads", "2", "--timeout", "900", "--access-logfile", "-", "--error-logfile", "-", "run:app"]
+# Une clé éphémère unique est créée au démarrage du conteneur si aucune clé
+# persistante n'est fournie. Elle n'est ainsi jamais figée dans une couche.
+CMD export SECRET_KEY="${SECRET_KEY:-$(python -c 'import secrets; print(secrets.token_hex(32))')}" && \
+    exec gunicorn --bind 0.0.0.0:8000 --workers 4 --threads 2 --timeout 900 \
+    --access-logfile - --error-logfile - run:app

@@ -120,9 +120,7 @@
             els.platformPill.style.borderColor = p.color ? `${p.color}55` : '';
         }
         if (els.inputIcon) {
-            els.inputIcon.className =
-                'absolute left-3 top-1/2 -translate-y-1/2 ' +
-                (p.id ? `${p.icon}` : 'fa-solid fa-link text-gray-400 dark:text-gray-500');
+            els.inputIcon.className = `dl-input-icon ${p.id ? p.icon : 'fa-solid fa-link'}`;
             if (p.id) els.inputIcon.style.color = p.color;
             else els.inputIcon.style.color = '';
         }

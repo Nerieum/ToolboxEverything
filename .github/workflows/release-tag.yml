@@ -1,0 +1,59 @@
+name: Release tag
+
+# Crée le tag Git `vX.Y.Z` (marqueur d'historique) quand VERSION est bumpée
+# sur main. NOTE : un tag poussé avec GITHUB_TOKEN ne déclenche PAS d'autre
+# workflow. Ce n'est pas un problème : l'image GHCR de version (X.Y.Z / X.Y)
+# est publiée par `docker-publish.yml` sur le push main qui modifie VERSION
+# (voir l'étape « release » là-bas), pas par ce tag.
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "VERSION"
+      - "CHANGELOG.md"
+      - "README.md"
+      - "Dockerfile"
+      - "compose.yml"
+      - "env.example"
+      - "app/**"
+      - "tests/**"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "VERSION must use MAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "tag=v${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create tag if missing
+        shell: bash
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if git rev-parse "${TAG}" >/dev/null 2>&1; then
+            echo "${TAG} already exists"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${TAG}" -m "Release ${TAG}"
+          git push origin "${TAG}"

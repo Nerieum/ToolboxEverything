@@ -1,0 +1,20 @@
+{# Macros Jinja partagées. #}
+
+{# Compartiment du plateau d'accueil. `tone` ne prend que les trois couleurs
+   de marque ; `meta` porte une information réelle, jamais un badge décoratif. #}
+{% macro home_tool(title, text, href, family, tone, meta='') %}
+<a href="{{ href }}" class="home-tool home-tool--{{ tone }}">
+    <span class="home-tool__topline">
+        <span class="home-tool__identity">
+            <span class="home-tool__number" aria-hidden="true"></span>
+            <span class="home-tool__family">{{ family }}</span>
+        </span>
+        {% if meta %}<span class="home-tool__meta">{{ meta }}</span>{% endif %}
+    </span>
+    <span class="home-tool__title">{{ title }}</span>
+    <span class="home-tool__text">{{ text }}</span>
+    <span class="home-tool__action" aria-hidden="true">
+        <i class="fas fa-arrow-right"></i>
+    </span>
+</a>
+{% endmacro %}

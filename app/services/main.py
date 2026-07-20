@@ -8,6 +8,7 @@ seule fois (quand `TOOLBOX_PRINT_BANNER=1` — défini par run.py côté dev).
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import sys
@@ -15,17 +16,16 @@ import time
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Optional
 
-from flask import (Flask, Response, current_app, g, jsonify, redirect,
-                   render_template, request, url_for)
+from flask import Flask, Response, g, jsonify, redirect, render_template, request, url_for
 from flask_compress import Compress
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 from yt_dlp.postprocessor import FFmpegPostProcessor
+from yt_dlp.version import __version__ as YT_DLP_VERSION
 
 from app import __version__
-from app.core.exceptions import register_error_handlers
+from app.core.api import is_json_endpoint
 from app.core.rate_limit import limiter
 from app.core.security_headers import register_security_headers
 from app.core.uploads import configure_pillow_limits
@@ -52,9 +52,29 @@ TAILWIND_CRITICAL_CLASSES = (
     ".hidden",
     ".flex",
     ".grid",
-    ".dark\\:bg-gray-900",
+    ".lg\\:flex",
     ".max-w-7xl",
 )
+
+ASSET_REVISION_FILES = (
+    "css/tailwind.css",
+    "css/style.css",
+    "js/main.js",
+    "js/shell.js",
+    "js/embedded-service.js",
+    "img/logo.svg",
+)
+
+
+def _asset_revision(app: Flask) -> str:
+    """Empreinte courte des assets critiques, calculée une fois au démarrage."""
+    digest = hashlib.sha256()
+    static_root = Path(app.static_folder or "")
+    for relative_path in ASSET_REVISION_FILES:
+        path = static_root / relative_path
+        if path.is_file():
+            digest.update(path.read_bytes())
+    return f"{__version__}-{digest.hexdigest()[:10]}"
 
 
 def _supports_color() -> bool:
@@ -65,7 +85,7 @@ def _supports_color() -> bool:
     return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
 
-def _print_banner(app: Flask, ffmpeg_path: Optional[str]) -> None:
+def _print_banner(app: Flask, ffmpeg_path: str | None) -> None:
     """Bannière ASCII au démarrage (uniquement en dev, jamais sous gunicorn)."""
     use_color = _supports_color()
 
@@ -85,7 +105,7 @@ def _print_banner(app: Flask, ffmpeg_path: Optional[str]) -> None:
     mode = "development" if is_dev else "production"
     mode_color = YELLOW if is_dev else GREEN
 
-    host = os.environ.get("HOST", "0.0.0.0")
+    host = os.environ.get("HOST", "127.0.0.1")
     port = os.environ.get("PORT", "8000")
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -102,8 +122,7 @@ def _print_banner(app: Flask, ffmpeg_path: Optional[str]) -> None:
         row("url", f"http://{host}:{port}"),
         row(
             "python",
-            f"{sys.version_info.major}.{sys.version_info.minor}."
-            f"{sys.version_info.micro}",
+            f"{sys.version_info.major}.{sys.version_info.minor}." f"{sys.version_info.micro}",
         ),
     ]
 
@@ -149,13 +168,11 @@ def _print_banner(app: Flask, ffmpeg_path: Optional[str]) -> None:
 
 def _configure_logging(app: Flask) -> None:
     """Configure un logging unique (console + fichier avec rotation)."""
-    log_dir = os.path.join(app.config["BASE_DIR"], "logs")
+    log_file = os.path.abspath(app.config["LOG_FILE"])
+    log_dir = os.path.dirname(log_file)
     os.makedirs(log_dir, exist_ok=True)
-    log_file = os.path.join(log_dir, "toolbox.log")
 
-    fmt = logging.Formatter(
-        "%(asctime)s %(levelname)s %(name)s: %(message)s"
-    )
+    fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
 
     # Évite les doublons si create_app est appelé deux fois (tests)
     if any(
@@ -216,7 +233,7 @@ def _enforce_tailwind_css_for_docker(app: Flask) -> None:
     app.logger.warning(message)
 
 
-def create_app(config_class: Optional[object] = None) -> Flask:
+def create_app(config_class: object | None = None) -> Flask:
     app = Flask(
         __name__,
         template_folder="../templates",
@@ -226,9 +243,8 @@ def create_app(config_class: Optional[object] = None) -> Flask:
     Config.init_app(app)
 
     # FFmpeg : une seule source de vérité (config.py)
-    ffmpeg_path = Config.get_ffmpeg_path()
+    ffmpeg_path = app.config.get("FFMPEG_PATH")
     if ffmpeg_path:
-        app.config["FFMPEG_PATH"] = ffmpeg_path
         FFmpegPostProcessor._ffmpeg_location.set(ffmpeg_path)
 
     # Stirling PDF : URL optionnelle pour l'iframe
@@ -274,9 +290,6 @@ def create_app(config_class: Optional[object] = None) -> Flask:
     app.register_blueprint(pdf_bp, url_prefix="/pdf")
     app.register_blueprint(speedtest_bp, url_prefix="/speedtest")
 
-    # Gestionnaires d'erreur (JSON pour APIs, HTML pour pages)
-    register_error_handlers(app)
-
     @app.route("/")
     def index():
         return render_template("index.html")
@@ -299,7 +312,7 @@ def create_app(config_class: Optional[object] = None) -> Flask:
 
     # --- Backwards-compat : anciens liens /youtube/* ----------------
     # Conserve la compatibilité des liens externes après le rename
-    # /youtube/ → /downloader/ (v1.3.1). On utilise 308 pour préserver
+    # /youtube/ → /downloader/ (v1.3.2). On utilise 308 pour préserver
     # la méthode HTTP (POST sur /youtube/download → POST /downloader/download).
     _LEGACY_METHODS = ("GET", "POST", "HEAD", "OPTIONS")
 
@@ -319,12 +332,10 @@ def create_app(config_class: Optional[object] = None) -> Flask:
     @limiter.exempt
     def health() -> Response:
         """Healthcheck (utilisé par Docker) — exempté du rate limiter."""
-        import yt_dlp
-
         status = {
             "status": "ok",
             "version": __version__,
-            "yt_dlp": yt_dlp.version.__version__,
+            "yt_dlp": YT_DLP_VERSION,
             "ffmpeg": bool(app.config.get("FFMPEG_PATH")),
             "stirling_pdf": bool(app.config.get("STIRLING_PDF_URL")),
             "librespeed": bool(app.config.get("LIBRESPEED_URL")),
@@ -350,19 +361,10 @@ def create_app(config_class: Optional[object] = None) -> Flask:
         )
         return response
 
-    # Routes qui renvoient toujours du JSON (endpoints d'API,
-    # même pour les erreurs comme 429, 400, 500).
-    API_ROUTE_PREFIXES = (
-        "/downloader/info",
-        "/downloader/download",
-        "/media/convert",
-        "/media/batch",
-        "/pdf/status",
-        "/essentials/api",
-    )
-
     def _wants_json(req) -> bool:
-        if req.path.startswith(API_ROUTE_PREFIXES):
+        # Une vue marquée @json_endpoint répond en JSON, erreurs comprises.
+        view = app.view_functions.get(req.endpoint or "")
+        if is_json_endpoint(view):
             return True
         if req.is_json:
             return True
@@ -393,11 +395,14 @@ def create_app(config_class: Optional[object] = None) -> Flask:
         app.logger.exception("Unhandled exception")
         return render_template("errors/500.html"), 500
 
+    asset_version = _asset_revision(app)
+
     @app.context_processor
     def _inject_globals():
         return {
             "current_year": datetime.now().year,
             "app_version": __version__,
+            "asset_version": asset_version,
             "stirling_enabled": bool(app.config.get("STIRLING_PDF_URL")),
             "librespeed_enabled": bool(app.config.get("LIBRESPEED_URL")),
             "essentials_tools_all": ESSENTIALS_TOOLS,
@@ -411,8 +416,3 @@ def create_app(config_class: Optional[object] = None) -> Flask:
         os.environ.pop("TOOLBOX_PRINT_BANNER", None)
 
     return app
-
-
-if __name__ == "__main__":
-    # Fallback direct (usage rare — préférer run.py)
-    create_app().run(host="0.0.0.0", port=8000, debug=True)

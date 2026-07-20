@@ -1,111 +1,83 @@
 {% extends 'base.html' %}
+{% from '_macros.html' import home_tool %}
 
 {% block content %}
-<div class="text-center py-10">
-    <div class="relative mb-16">
-        <img src="{{ url_for('static', filename='img/logo.svg') }}"
-             alt="Logo Toolbox Everything"
-             class="home-hero__logo"
-             width="160" height="160"
-             loading="eager" decoding="async">
-        <h1 class="home-hero__title">
-            Moins d'onglets,<br>
-            <span class="home-hero__title-accent">plus d'outils.</span>
-        </h1>
-        <p class="home-hero__subtitle">
-            Téléchargement, conversion, outils essentiels, speedtest et PDF.
-        </p>
-    </div>
-
-    <div class="home-card-grid">
-        <div class="home-card group">
-            <div class="p-7">
-                <div class="home-card__icon home-card__icon--red mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
-                    <i class="fas fa-cloud-arrow-down text-2xl"></i>
-                </div>
-                <h2 class="home-card__title mb-3">Downloader</h2>
-                <p class="home-card__text mb-5">
-                    Récupérez une vidéo ou la piste audio depuis YouTube, Vimeo, Dailymotion ou TikTok.
-                </p>
-                <a href="{{ url_for('downloader.index') }}"
-                   class="home-card__cta home-card__cta--red">
-                    Commencer
-                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
-                </a>
-            </div>
+<section class="home-shell">
+    <header class="home-cover">
+        <div class="home-cover__copy">
+            <p class="home-cover__eyebrow">Boîte à outils personnelle · {{ essentials_tools_all|length + 5 }} fonctions</p>
+            <h1 class="home-cover__title">
+                Les outils qu’on finit<br>toujours par <em>chercher.</em>
+            </h1>
+            <p class="home-cover__lede">
+                Récupérer une vidéo, convertir un média, remettre un JSON droit ou
+                recoller deux PDF&nbsp;: tout est rangé ici, prêt à servir.
+            </p>
         </div>
 
-        <div class="home-card group">
-            <div class="p-7">
-                <div class="home-card__icon home-card__icon--blue mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
-                    <i class="far fa-images text-2xl"></i>
-                </div>
-                <h2 class="home-card__title mb-3">Convertisseur Média</h2>
-                <p class="home-card__text mb-5">
-                    Convertissez images et vidéos au format voulu.
-                </p>
-                <a href="{{ url_for('media.index') }}"
-                   class="home-card__cta home-card__cta--blue">
-                    Commencer
-                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
-                </a>
-            </div>
+        <div class="home-cover__aside">
+            <span class="home-cover__index" aria-hidden="true">00 / 05</span>
+            <p>Pas de compte, pas de détour. Les petits outils s’exécutent directement dans le navigateur.</p>
+        </div>
+    </header>
+
+    <section class="home-stations" aria-labelledby="home-stations-title">
+        <div class="home-section-heading">
+            <h2 id="home-stations-title">Choisir un atelier</h2>
+            <span>5 portes d’entrée</span>
         </div>
 
-        <div class="home-card group">
-            <div class="p-7">
-                <div class="home-card__icon home-card__icon--amber mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
-                    <i class="fas fa-tools text-2xl"></i>
-                </div>
-                <h2 class="home-card__title mb-3">Outils Essentiels</h2>
-                <p class="home-card__text mb-5">
-                    QR codes, mots de passe, hash, base64 et bien plus encore.
-                </p>
-                <a href="/essentials"
-                   class="home-card__cta home-card__cta--amber">
-                    Accéder
-                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
-                </a>
-            </div>
+        <nav class="home-workbench" aria-label="Choisir un atelier">
+            {{ home_tool(
+                'Downloader', 'Une URL entre, la vidéo ou l’audio ressort.',
+                url_for('downloader.index'), 'Fichiers & médias', 'blue') }}
+            {{ home_tool(
+                'Conversion', 'Images et vidéos changent de format, seules ou par lot.',
+                url_for('media.index'), 'Fichiers & médias', 'blue') }}
+            {{ home_tool(
+                'Essentiels', 'Encoder, comparer, générer, inspecter. Les petites opérations de tous les jours.',
+                url_for('essentials.index'), 'Dans le navigateur', 'pink',
+                essentials_tools_all|length ~ ' outils') }}
+            {{ home_tool(
+                'PDF', 'Fusionner, couper, compresser ou OCRiser.',
+                url_for('pdf.index'), 'Service embarqué', 'violet',
+                'Prêt' if stirling_enabled else 'À configurer') }}
+            {{ home_tool(
+                'Speedtest', 'Mesurer le débit, la latence et la gigue.',
+                url_for('speedtest.index'), 'Service embarqué', 'violet',
+                'Prêt' if librespeed_enabled else 'À configurer') }}
+        </nav>
+    </section>
+
+    <section class="home-shortcuts" aria-labelledby="home-shortcuts-title">
+        <div class="home-section-heading">
+            <h2 id="home-shortcuts-title">Accès directs</h2>
+            <a href="{{ url_for('essentials.index') }}">
+                <span>Voir tout</span>
+                <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            </a>
         </div>
 
-        <div class="home-card group">
-            <div class="p-7">
-                <div class="home-card__icon home-card__icon--violet mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
-                    <i class="fas fa-file-pdf text-2xl"></i>
-                </div>
-                <h2 class="home-card__title mb-3">Outils PDF</h2>
-                <p class="home-card__text mb-5">
-                    Fusion, découpe, compression et OCR avec Stirling PDF.
-                </p>
-                <a href="{{ url_for('pdf.index') }}"
-                   class="home-card__cta home-card__cta--violet">
-                    {{ 'Ouvrir' if stirling_enabled else 'Configurer' }}
-                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
+        <nav class="home-shortcut-grid" aria-label="Outils essentiels">
+            {% for tool in essentials_tools_all %}
+                <a href="{{ url_for(tool.endpoint) }}" class="home-shortcut">
+                    <span class="home-shortcut__index">{{ '%02d'|format(loop.index) }}</span>
+                    <span class="home-shortcut__icon site-dropdown__icon--{{ tool.accent }}" aria-hidden="true">
+                        <i class="fas {{ tool.icon }}"></i>
+                    </span>
+                    <span class="home-shortcut__copy">
+                        <strong>{{ tool.short_title }}</strong>
+                        <small>{{ tool.caption }}</small>
+                    </span>
+                    <i class="fas fa-arrow-right home-shortcut__arrow" aria-hidden="true"></i>
                 </a>
-            </div>
-        </div>
+            {% endfor %}
+        </nav>
+    </section>
 
-        <div class="home-card group">
-            <div class="p-7">
-                <div class="home-card__icon home-card__icon--emerald mx-auto mb-5 group-hover:scale-110 transition-transform duration-200">
-                    <i class="fas fa-gauge-high text-2xl"></i>
-                </div>
-                <h2 class="home-card__title mb-3">Speedtest</h2>
-                <p class="home-card__text mb-5">
-                    Mesurez le débit et la latence avec LibreSpeed.
-                </p>
-                <a href="{{ url_for('speedtest.index') }}"
-                   class="home-card__cta home-card__cta--emerald">
-                    {{ 'Tester' if librespeed_enabled else 'Configurer' }}
-                    <i class="fas fa-arrow-right text-xs transition-transform duration-200 group-hover:translate-x-1"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
-{% block tools_features %}
-{% include 'tool_features.html' %}
+    <footer class="home-footnote">
+        <span>Local d’abord</span>
+        <p>Les outils essentiels travaillent dans cet onglet. Les fichiers envoyés aux convertisseurs sont temporaires.</p>
+    </footer>
+</section>
 {% endblock %}

@@ -19,19 +19,19 @@ essentials_bp = Blueprint("essentials", __name__)
 # Import des sous-modules : l'ordre définit l'ordre d'affichage sur la
 # homepage et dans la nav. Chaque import déclenche register_tool().
 from . import (  # noqa: E402,F401
-    qr,
-    password,
-    hash_calc,
     b64,
-    json_fmt,
-    timestamp,
     color,
-    uuid_gen,
-    jwt_decode,
-    regex_test,
-    url_encode,
-    lorem,
     diff,
+    hash_calc,
+    json_fmt,
+    jwt_decode,
+    lorem,
+    password,
+    qr,
+    regex_test,
+    timestamp,
+    url_encode,
+    uuid_gen,
 )
 
 for _module in (

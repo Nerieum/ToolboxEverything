@@ -12,10 +12,10 @@ import sys
 import urllib.request
 from pathlib import Path
 
-
-TAILWIND_VERSION = os.environ.get("TAILWIND_VERSION", "3.4.13")
+TAILWIND_VERSION = os.environ.get("TAILWIND_VERSION", "4.3.3")
 ROOT = Path(__file__).resolve().parents[1]
 BIN_DIR = ROOT / "bin"
+VERSION_FILE = BIN_DIR / ".tailwind-version"
 INPUT_CSS = ROOT / "app" / "static" / "css" / "input.css"
 OUTPUT_CSS = ROOT / "app" / "static" / "css" / "tailwind.css"
 CONFIG = ROOT / "tailwind.config.js"
@@ -24,7 +24,7 @@ CRITICAL_CLASSES = (
     ".hidden",
     ".flex",
     ".grid",
-    ".dark\\:bg-gray-900",
+    ".lg\\:flex",
     ".max-w-7xl",
 )
 
@@ -62,7 +62,11 @@ def _platform_parts() -> tuple[str, str]:
 
 def install(force: bool = False) -> Path:
     target = binary_path()
-    if target.exists() and not force:
+    installed_version = ""
+    if VERSION_FILE.exists():
+        installed_version = VERSION_FILE.read_text(encoding="utf-8").strip()
+
+    if target.exists() and installed_version == TAILWIND_VERSION and not force:
         print(f"Tailwind CLI deja present: {target.relative_to(ROOT)}")
         return target
 
@@ -75,12 +79,15 @@ def install(force: bool = False) -> Path:
 
     BIN_DIR.mkdir(parents=True, exist_ok=True)
     print(f"Telechargement Tailwind CLI v{TAILWIND_VERSION}: {url}")
-    urllib.request.urlretrieve(url, target)  # noqa: S310 - URL controlee par la version.
+    download = target.with_suffix(target.suffix + ".download")
+    urllib.request.urlretrieve(url, download)  # noqa: S310 - URL controlee par la version.
+    download.replace(target)
 
     if os.name != "nt":
         mode = target.stat().st_mode
         target.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
+    VERSION_FILE.write_text(TAILWIND_VERSION + "\n", encoding="utf-8")
     print(f"Tailwind CLI installe: {target.relative_to(ROOT)}")
     return target
 
@@ -119,8 +126,7 @@ def check() -> int:
     missing = [selector for selector in CRITICAL_CLASSES if selector not in css]
     if missing:
         print(
-            "CSS Tailwind incomplet, classes critiques absentes: "
-            + ", ".join(missing),
+            "CSS Tailwind incomplet, classes critiques absentes: " + ", ".join(missing),
             file=sys.stderr,
         )
         return 1

@@ -4,8 +4,10 @@
 # Le projet est actuellement en cours de refonte, la description ci-dessous correspond à l'ancienne version et une nouvelle version sera bientôt proposée.
 
 Stack : **Flask + Tailwind**, tout en Docker, prêt à être posé derrière un reverse proxy.
+Interface **sobre et utilitaire** (v2.0.0) : couche de tokens CSS, thème clair/sombre
+piloté par variables, Fraunces self-hébergée et zéro dépendance front tierce au runtime.
 
-![version](https://img.shields.io/badge/version-1.3.1-blue)
+![version](https://img.shields.io/badge/version-2.0.0-blue)
 ![python](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)
 ![flask](https://img.shields.io/badge/flask-3.1-000000?logo=flask)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -40,7 +42,7 @@ docker compose up -d --build # build local (dev / CI)
 Ou en prod avec l'image publique GHCR :
 
 ```bash
-export TOOLBOX_IMAGE=ghcr.io/doalou/toolbox_everything:1.3.1
+export TOOLBOX_IMAGE=ghcr.io/doalou/toolbox_everything:2.0.0
 docker compose pull && docker compose up -d
 ```
 
@@ -51,6 +53,8 @@ Une fois démarré :
 - LibreSpeed (iframe) → <http://localhost:8081>
 
 ### En local (sans Docker)
+
+Python **3.12** est la version de référence du projet.
 
 ```bash
 python -m venv venv
@@ -67,6 +71,13 @@ python run.py --dev
 > Les outils PDF et Speedtest nécessitent leurs services côté serveur. Voir la section Configuration ou lance `docker compose up -d`.
 > Le rate limiter tombe sur `memory://` si aucun Redis n'est accessible. OK en dev.
 
+Le service Stirling PDF fourni par `compose.yml` est volontairement amnésique :
+ses répertoires de travail, profils LibreOffice, configuration et logs sont
+montés en RAM (`tmpfs`) et aucun volume persistant ne lui est attaché. Les
+documents et toute configuration générée disparaissent donc au redémarrage du
+conteneur. La couche système reste inscriptible uniquement pour que le script
+d'initialisation officiel de Stirling puisse créer ses liens internes.
+
 ---
 
 ## Configuration
@@ -76,7 +87,6 @@ Tout se passe dans `.env` (copié depuis `env.example`) :
 | Variable | Rôle | Défaut |
 |---|---|---|
 | `SECRET_KEY` | Clé Flask, **à fixer** en prod | auto-générée si absente |
-| `APP_VERSION` | Version affichée dans le footer / `/health` | `1.3.1` |
 | `FLASK_ENV` | `development` ou `production` | `production` |
 | `MAX_CONTENT_LENGTH` | Taille max des uploads (octets) | `536870912` (512 MB) |
 | `FFMPEG_PATH` | Chemin explicite vers FFmpeg | auto-détecté (`shutil.which`) |
@@ -85,47 +95,51 @@ Tout se passe dans `.env` (copié depuis `env.example`) :
 | `LIBRESPEED_URL` | URL **interne** de LibreSpeed (healthcheck serveur) | `http://librespeed` |
 | `LIBRESPEED_PUBLIC_URL` | URL **publique** utilisée par l'iframe (navigateur) | `http://localhost:8081` |
 | `RATELIMIT_STORAGE_URI` | Backend du rate limiter (Redis en prod) | `redis://redis:6379/0` |
-| `TOOLBOX_IMAGE` | Image Docker à tirer depuis GHCR | `ghcr.io/doalou/toolbox_everything:1.3.1` |
+| `TOOLBOX_IMAGE` | Image Docker à tirer depuis GHCR | `ghcr.io/doalou/toolbox_everything:2.0.0` |
 | `TOOLBOX_PORT` / `STIRLING_PORT` / `LIBRESPEED_PORT` | Ports hôte exposés | `8000` / `8080` / `8081` |
 
 ---
 
 ## Versioning et images GHCR
 
-La version de référence est `VERSION`. Pour la v1.3.1, elle alimente :
+La version de référence est `VERSION`. Pour la v2.0.0, elle alimente :
 
-- `APP_VERSION` dans l'application, le footer et `/health`.
-- `docker build --build-arg APP_VERSION=...`.
+- La version affichée dans le footer et `/health`.
+- Les tags locaux générés par `make docker-build`.
 - Le workflow GitHub Actions qui publie l'image sur GHCR.
 
 Images publiées :
 
 ```bash
-ghcr.io/doalou/toolbox_everything:1.3.1
-ghcr.io/doalou/toolbox_everything:1.3
+ghcr.io/doalou/toolbox_everything:2.0.0
+ghcr.io/doalou/toolbox_everything:2.0
 ghcr.io/doalou/toolbox_everything:latest
 ```
 
 Règle de release :
 
 1. Mettre à jour `VERSION`.
-2. Reporter la version dans `env.example`, `compose.yml`, `Dockerfile`, le badge README et `CHANGELOG.md`.
-3. Créer un tag Git `vX.Y.Z`.
-4. Pousser le tag. Le workflow refuse un tag `vX.Y.Z` qui ne correspond pas au contenu de `VERSION`.
-5. GitHub Actions publie et signe l'image `ghcr.io/doalou/toolbox_everything`.
+2. Reporter la version dans le badge README, les exemples GHCR et `CHANGELOG.md`.
+3. Merger sur `main`.
+4. Le workflow Docker détecte le bump de `VERSION` sur ce push et publie les tags
+   **immuables** `X.Y.Z` et `X.Y`, plus `latest`. Les commits sans bump (et le cron
+   nocturne) ne réécrivent que `latest`.
+5. Le workflow `Release tag` crée en parallèle le tag Git `vX.Y.Z` (marqueur d'historique).
 
-Exemple :
+Exemple pour publier une nouvelle version :
 
 ```bash
-git tag v1.3.1
-git push origin v1.3.1
+echo 2.0.1 > VERSION
+git add VERSION CHANGELOG.md README.md
+git commit -m "Release 2.0.1"
+git push origin main
 ```
 
 ---
 
 ## Sécurité
 
-La v1.3.1 durcit sérieusement la couche exposée (voir `CHANGELOG.md` pour le détail) :
+La couche exposée est sérieusement durcie (voir `CHANGELOG.md` pour le détail) :
 
 - **CSP stricte avec nonce par requête**, `frame-ancestors 'none'`, `object-src 'none'`,
   Permissions-Policy verrouillée, HSTS conditionnel sur HTTPS.
@@ -140,7 +154,7 @@ La v1.3.1 durcit sérieusement la couche exposée (voir `CHANGELOG.md` pour le d
   `app/static/vendor/`, seul `qrcode-generator` reste en CDN avec SRI SHA-384
   obligatoire (enforcé par le modèle `ExternalScript`).
 
-37 tests dédiés dans `tests/test_security.py`.
+Tests dédiés dans `tests/test_security.py`.
 
 ---
 
@@ -149,29 +163,32 @@ La v1.3.1 durcit sérieusement la couche exposée (voir `CHANGELOG.md` pour le d
 ```
 toolbox_everything/
 ├── app/
-│   ├── core/                     # exceptions, rate_limit, security_headers, uploads
+│   ├── core/                     # api (marqueur JSON), files, rate_limit, security_headers, uploads
 │   ├── services/
 │   │   ├── main.py               # Factory Flask (logging, compress, /health, errors)
+│   │   ├── _embedded.py          # Helper iframe partagé (Stirling / LibreSpeed)
 │   │   ├── downloader/           # yt-dlp (multi-plateformes)
 │   │   ├── media_converter/      # FFmpeg / Pillow
 │   │   ├── essentials/           # 13 outils client-side (registry auto-enregistrée)
 │   │   ├── pdf_tools/            # Iframe Stirling PDF + /pdf/status
-│   │   ├── speedtest/            # Iframe LibreSpeed + /speedtest/status
-│   │   └── common/               # Utilitaires partagés
+│   │   └── speedtest/            # Iframe LibreSpeed + /speedtest/status
 │   ├── static/
+│   │   ├── css/style.css         # Design system (tokens :root/.dark, composants)
 │   │   ├── css/input.css         # Source Tailwind → build vers tailwind.css
-│   │   ├── vendor/fontawesome/   # Font Awesome 6.0.0 local (plus de CDN)
-│   │   └── js/                   # JS applicatif + /essentials/*.js
-│   └── templates/                # Jinja2
-├── tests/                        # pytest (78 tests dont 37 sécurité)
-├── config.py                     # Configuration centralisée
+│   │   ├── vendor/fontawesome/   # Font Awesome local (plus de CDN)
+│   │   ├── vendor/fonts/         # Fraunces (variable woff2, OFL) self-hébergée
+│   │   └── js/                   # JS applicatif (main.js, media.js) + /essentials/*.js
+│   └── templates/                # Jinja2 (base.html, _macros.html, errors/, ...)
+├── tests/                        # pytest (111 tests)
+├── config.py                     # Configuration centralisée (source unique des limites)
+├── pyproject.toml                # Config outillage : ruff + black + pytest + coverage
 ├── tailwind.config.js            # Config Tailwind (purge, couleurs, animations)
 ├── run.py                        # CLI + cible Gunicorn (`run:app`)
 ├── Dockerfile                    # Multi-stage : py-builder + css-builder + runtime
 ├── compose.yml                   # Toolbox + Stirling PDF + LibreSpeed + Redis
 ├── requirements.txt              # Runtime (audité, 0 dépendance morte)
-├── requirements-dev.txt          # Dev (pytest, black, flake8)
-├── Makefile                      # setup, dev, test, tailwind-*, docker-*
+├── requirements-dev.txt          # Dev (pytest, ruff, black, bandit, pip-audit)
+├── Makefile                      # setup, dev, test, lint, tailwind-*, docker-*
 └── CHANGELOG.md
 ```
 
@@ -185,11 +202,11 @@ make tailwind-install  # télécharge le binaire Tailwind CLI (une fois)
 make tailwind-build    # build CSS minifié
 make tailwind-watch    # build en continu (pour le dev CSS)
 make dev               # python run.py --dev sur :8000
-make test              # pytest (78 tests)
+make test              # pytest (111 tests)
 make test-cov          # pytest + couverture
-make lint              # flake8
-make format            # black
-make docker-build      # construit les tags locaux et GHCR avec APP_VERSION
+make lint              # ruff check
+make format            # ruff --fix + black
+make docker-build      # construit les tags locaux et GHCR depuis VERSION
 ```
 
 Bannière ASCII au boot (dev uniquement), logs rotatifs dans `logs/toolbox.log` (5 MB × 5).

@@ -1,6 +1,8 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+# Fichiers .pyc orphelins laissés par le verrouillage Windows (ex: uploads.pyc.1234)
+*.pyc.*
 *$py.class
 
 # C extensions

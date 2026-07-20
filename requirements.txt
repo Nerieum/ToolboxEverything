@@ -1,5 +1,5 @@
 # Toolbox Everything — runtime dependencies
-# Synchronisé avec les `import` réels du code (audit v1.3.1).
+# Synchronisé avec les `import` réels du code (audit v2.0.0).
 # Pour le dev : voir requirements-dev.txt
 
 # --- Flask core ---
@@ -10,23 +10,23 @@ Flask-Compress==1.24
 
 # --- Rate limiting (protection DoS sur endpoints serveur) ---
 Flask-Limiter==4.1.1
-redis==6.2.0
+redis==8.0.1
 
 # --- Médias / images ---
-Pillow==12.2.0
+Pillow==12.3.0
 # FFmpeg est appelé directement via subprocess (cf. media_converter/routes.py),
 # pas besoin du wrapper `ffmpeg-python`.
 
 # --- Téléchargement vidéo / audio (multi-sources) ---
-yt-dlp==2026.03.17
+yt-dlp==2026.7.4
 
 # --- HTTP client (healthcheck Stirling PDF) ---
-requests==2.33.1
+requests==2.34.2
 
 # --- Serveur WSGI prod + compression ---
-gunicorn==25.3.0
+gunicorn==26.0.0
 brotli==1.2.0
 
 # --- TLS / HTTP pinning (transitifs explicites pour la sécurité) ---
-certifi>=2026.2.25
-urllib3>=2.6.3
+certifi>=2026.6.17
+urllib3>=2.7.0

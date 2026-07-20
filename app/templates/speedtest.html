@@ -1,66 +1,102 @@
 {% extends 'base.html' %}
 
-{% block title %}Speedtest | Toolbox Everything{% endblock %}
+{% block title %}Test de débit | Toolbox Everything{% endblock %}
 
 {% block content %}
-{% if librespeed_configured %}
-    <div class="pdf-frame-wrap">
-        <div class="pdf-frame-toolbar">
-            <div class="pdf-frame-toolbar__left">
-                <span class="pdf-frame-toolbar__dot" id="speedtestStatusDot" aria-hidden="true"></span>
-                <h1 class="pdf-frame-toolbar__title">Instance LibreSpeed</h1>
-            </div>
-            <div class="pdf-frame-toolbar__right">
-                <a href="{{ librespeed_public_url }}" target="_blank" rel="noopener noreferrer"
-                   class="tool-btn tool-btn--ghost tool-btn--sm" aria-label="Ouvrir dans un nouvel onglet">
-                    <i class="fas fa-external-link-alt text-xs"></i>
-                </a>
-            </div>
-        </div>
-        <iframe id="speedtestFrame"
-                class="pdf-frame"
-                src="{{ librespeed_public_url }}"
-                title="LibreSpeed"
-                loading="lazy"
-                referrerpolicy="no-referrer"></iframe>
-    </div>
-
-    <script nonce="{{ csp_nonce }}">
-        (function () {
-            const dot = document.getElementById('speedtestStatusDot');
-            fetch('/speedtest/status', { headers: { 'Accept': 'application/json' } })
-                .then(r => r.json())
-                .then(data => {
-                    dot.classList.add(data.reachable ? 'pdf-frame-toolbar__dot--ok' : 'pdf-frame-toolbar__dot--warn');
-                })
-                .catch(() => dot.classList.add('pdf-frame-toolbar__dot--warn'));
-        })();
-    </script>
-{% else %}
-    <div class="max-w-2xl mx-auto px-4 py-12">
-        <div class="tool-hero">
-            <h1 class="tool-hero__title">Speedtest</h1>
-            <p class="tool-hero__subtitle">
-                LibreSpeed n'est pas encore démarré.
+<section class="service-page service-page--speedtest">
+    <header class="service-header">
+        <div class="service-header__copy">
+            <p class="service-header__eyebrow">05 / Réseau · LibreSpeed</p>
+            <h1 class="service-header__title">Test de débit</h1>
+            <p class="service-header__description">
+                Mesurer la ligne, pas votre patience, sans compte ni télémétrie.
             </p>
         </div>
 
-        <div class="tool-panel">
-            <div class="pdf-setup-block">
-                <pre class="pdf-setup-code"><code>docker compose up -d</code></pre>
+        <div class="service-header__actions">
+            {% if librespeed_configured %}
+                <span class="service-status"
+                      data-service-status="{{ url_for('speedtest.status') }}"
+                      data-state="checking"
+                      role="status"
+                      aria-live="polite">
+                    <span class="service-status__dot" aria-hidden="true"></span>
+                    <span class="service-status__label">Vérification</span>
+                </span>
+                <a href="{{ librespeed_public_url }}" target="_blank" rel="noopener noreferrer"
+                   class="service-open" aria-label="Ouvrir LibreSpeed dans un nouvel onglet">
+                    <span>Ouvrir à part</span>
+                    <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </a>
+            {% else %}
+                <span class="service-status" data-state="offline">
+                    <span class="service-status__dot" aria-hidden="true"></span>
+                    <span class="service-status__label">Non configuré</span>
+                </span>
+            {% endif %}
+        </div>
+    </header>
+
+    {% if librespeed_configured %}
+        <div class="service-frame-shell" data-service-frame-shell>
+            <div class="service-frame-bar" aria-hidden="true">
+                <span>LibreSpeed</span>
+                <span>Télémétrie désactivée</span>
+            </div>
+            <div class="service-frame-viewport">
+                <div class="service-frame-loading" aria-hidden="true">
+                    <span class="service-frame-loading__mark"></span>
+                    <span>Chargement de LibreSpeed</span>
+                </div>
+                <iframe class="service-frame pdf-frame"
+                        data-service-frame
+                        src="{{ librespeed_public_url }}"
+                        title="LibreSpeed"
+                        loading="eager"
+                        referrerpolicy="no-referrer"></iframe>
+            </div>
+        </div>
+    {% else %}
+        <section class="service-offline" aria-labelledby="speedtest-setup-title">
+            <div class="service-offline__intro">
+                <p class="service-offline__state"><span></span> Service hors ligne</p>
+                <h2 id="speedtest-setup-title">La piste est libre.<br><em>Il manque le chrono.</em></h2>
+                <p>
+                    LibreSpeed mesure votre connexion depuis votre propre infrastructure. Aucun
+                    compte, aucune publicité et aucune donnée envoyée à un tiers.
+                </p>
+                <ul class="service-capabilities" aria-label="Mesures disponibles">
+                    <li><span>01</span> Débit descendant</li>
+                    <li><span>02</span> Débit montant</li>
+                    <li><span>03</span> Ping & gigue</li>
+                </ul>
             </div>
 
-            <a href="https://github.com/librespeed/speedtest"
-               target="_blank" rel="noopener noreferrer"
-               class="tool-btn tool-btn--ghost tool-btn--sm">
-                <i class="fab fa-github"></i>
-                <span>LibreSpeed</span>
-            </a>
-        </div>
-    </div>
-{% endif %}
-{% endblock %}
+            <aside class="service-runbook" aria-label="Mise en route de LibreSpeed">
+                <header>
+                    <span>Mise en route</span>
+                    <span>≈ 30 secondes</span>
+                </header>
+                <ol>
+                    <li><span>1</span><p>Ouvrir un terminal à la racine du projet.</p></li>
+                    <li><span>2</span><p>Lancer le service avec la commande ci-dessous.</p></li>
+                    <li><span>3</span><p>Recharger cette page quand le conteneur est prêt.</p></li>
+                </ol>
+                <div class="service-command">
+                    <span>Commande</span>
+                    <code>docker compose up -d librespeed</code>
+                </div>
+                <a href="https://github.com/librespeed/speedtest"
+                   target="_blank" rel="noopener noreferrer" class="service-source">
+                    <span>Documentation du moteur</span>
+                    <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                </a>
+            </aside>
+        </section>
+    {% endif %}
+</section>
 
-{% block tools_features %}
-{% include 'tool_features.html' %}
+{% if librespeed_configured %}
+    <script src="{{ url_for('static', filename='js/embedded-service.js', v=asset_version) }}" defer></script>
+{% endif %}
 {% endblock %}

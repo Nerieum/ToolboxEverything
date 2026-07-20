@@ -12,7 +12,10 @@ TOOL = register_tool(
         endpoint="essentials.color.index",
         title="Palette de couleurs",
         short_title="Palette",
-        description="Générez une palette harmonieuse à partir d'une couleur de base (mono, analogue, complémentaire, triadique).",
+        description=(
+            "Générez une palette harmonieuse à partir d'une couleur de base "
+            "(mono, analogue, complémentaire, triadique)."
+        ),
         caption="Choisir les bonnes teintes",
         icon="fa-palette",
         accent="pink",
