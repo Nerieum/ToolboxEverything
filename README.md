@@ -37,7 +37,7 @@ Un **unique** `compose.yml` couvre les deux modes de déploiement, choix via `TO
 
 ```bash
 git clone https://github.com/Nerieum/ToolboxEverything.git
-cd toolbox_everything
+cd ToolboxEverything
 cp env.example .env          # édite au moins SECRET_KEY
 docker compose up -d --build # build local (dev / CI)
 ```
