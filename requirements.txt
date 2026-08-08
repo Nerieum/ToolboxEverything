@@ -19,6 +19,8 @@ Pillow==12.3.0
 
 # --- Téléchargement vidéo / audio (multi-sources) ---
 yt-dlp==2026.7.4
+yt-dlp-ejs==0.8.0
+filelock==3.32.2
 
 # --- HTTP client (healthcheck Stirling PDF) ---
 requests==2.34.2

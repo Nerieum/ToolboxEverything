@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Politique de confidentialité · Toolbox Everything{% endblock %}
+
+{% block content %}
+<article class="legal-page">
+    <header class="legal-hero">
+        <p class="legal-hero__eyebrow">Informations légales · 01</p>
+        <h1>Politique de confidentialité</h1>
+        <p class="legal-hero__lede">
+            Ce document explique quelles données sont traitées par Toolbox Everything,
+            pourquoi elles le sont et combien de temps elles restent disponibles.
+        </p>
+        <p class="legal-hero__updated">Dernière mise à jour : 8 août 2026</p>
+    </header>
+
+    <aside class="legal-summary" aria-label="Résumé de la politique">
+        <div><strong>Sans compte</strong><span>Aucune inscription ni profil publicitaire.</span></div>
+        <div><strong>Local d'abord</strong><span>La majorité des outils mobiles et Web s'exécutent sur l'appareil.</span></div>
+        <div><strong>Fichiers temporaires</strong><span>Les traitements serveur sont supprimés après la réponse.</span></div>
+    </aside>
+
+    <div class="legal-layout">
+        <nav class="legal-toc" aria-label="Sommaire">
+            <span>Sommaire</span>
+            <a href="#responsable">Responsable</a>
+            <a href="#web">Site Web</a>
+            <a href="#mobile">Application mobile</a>
+            <a href="#tiers">Services tiers</a>
+            <a href="#droits">Vos droits</a>
+        </nav>
+
+        <div class="legal-copy">
+            <section id="portee">
+                <h2>1. Portée</h2>
+                <p>
+                    Cette politique couvre le site Web Toolbox Everything et l'application
+                    Toolbox Everything Mobile. Elle ne couvre pas les sites externes ouverts
+                    depuis un lien, qui appliquent leurs propres règles.
+                </p>
+            </section>
+
+            <section id="responsable">
+                <h2>2. Responsable du traitement</h2>
+                <p>
+                    Le service est édité par l'<strong>Association Nerieum</strong>, établie à
+                    Strasbourg, France. Pour toute question ou demande relative aux données :
+                    <a href="mailto:contact@doalo.fr">contact@doalo.fr</a>.
+                </p>
+            </section>
+
+            <section id="web">
+                <h2>3. Données traitées sur le site Web</h2>
+                <h3>Outils exécutés dans le navigateur</h3>
+                <p>
+                    Les outils essentiels, comme le générateur de mots de passe, l'encodage,
+                    le diff ou le QR code, traitent leurs entrées dans le navigateur. Leur
+                    contenu n'est pas envoyé au serveur Toolbox.
+                </p>
+
+                <h3>Conversion, PDF et téléchargement</h3>
+                <p>
+                    Lorsqu'un fichier ou une URL est envoyé à un outil serveur, la donnée est
+                    utilisée uniquement pour produire le résultat demandé. Les conversions
+                    média et téléchargements utilisent des répertoires temporaires supprimés
+                    à la fin de la réponse ou en cas d'erreur. L'instance PDF est configurée
+                    sans stockage utilisateur et nettoie ses fichiers temporaires au plus tard
+                    après une heure.
+                </p>
+
+                <h3>Données techniques et sécurité</h3>
+                <p>
+                    L'adresse IP est utilisée pour limiter les abus. Les compteurs sont gardés
+                    en mémoire avec une expiration automatique. Les journaux applicatifs
+                    contiennent la date, le chemin demandé, le statut et la durée de réponse,
+                    ainsi que des diagnostics en cas d'erreur. Un nom de fichier peut apparaître
+                    dans ces diagnostics, mais le contenu du fichier n'y est pas copié. Les
+                    journaux fonctionnent par rotation, avec au maximum six fichiers de 5 Mio.
+                    Leur durée dépend donc du trafic.
+                    Le serveur ou le reverse proxy peut aussi produire ses propres journaux
+                    techniques nécessaires à la sécurité et à l'exploitation.
+                </p>
+
+                <h3>Préférence d'apparence</h3>
+                <p>
+                    Le choix du thème clair ou sombre est conservé dans le stockage local du
+                    navigateur. Aucun cookie publicitaire ni outil d'analyse d'audience n'est
+                    intégré par Toolbox Everything.
+                </p>
+            </section>
+
+            <section id="mobile">
+                <h2>4. Données traitées dans l'application mobile</h2>
+                <p>
+                    L'application ne demande pas de compte et n'intègre ni publicité, ni
+                    télémétrie, ni outil d'analyse. Favoris, statistiques d'utilisation,
+                    thème, notes, minuteurs et réglages restent dans le stockage local de
+                    l'appareil jusqu'à leur suppression par l'utilisateur ou la désinstallation.
+                </p>
+                <ul>
+                    <li>La caméra sert au scan de QR codes ; les images sont analysées sur l'appareil.</li>
+                    <li>Les notifications signalent localement la progression des téléchargements.</li>
+                    <li>Les fichiers enregistrés restent dans le stockage choisi par l'utilisateur.</li>
+                    <li>Le téléchargeur échange directement avec YouTube pour obtenir les métadonnées et flux demandés.</li>
+                    <li>Le testeur réseau contacte des services IP et de connectivité pour afficher les résultats sollicités.</li>
+                </ul>
+                <p>
+                    Les autorisations caméra, notifications et stockage compatible sont
+                    demandées uniquement lorsqu'une fonction concernée est utilisée. Elles
+                    peuvent être retirées depuis les réglages du système.
+                </p>
+            </section>
+
+            <section id="tiers">
+                <h2>5. Services tiers et destinataires</h2>
+                <p>
+                    Selon l'outil choisi, une requête peut être adressée à YouTube, Vimeo,
+                    Dailymotion, TikTok, Google, ipify, icanhazip, ident.me, ipapi.co,
+                    ipwho.is, ipinfo.io, ifconfig.co ou httpbin.org. Ces services reçoivent
+                    notamment l'adresse IP nécessaire à la communication réseau et appliquent
+                    leurs propres politiques. Les services PDF et Speedtest sont des instances
+                    auto-hébergées de Stirling PDF et LibreSpeed.
+                </p>
+                <p>
+                    Les traitements reposent sur l'exécution du service demandé et, pour la
+                    sécurité, sur l'intérêt légitime à prévenir les abus. Toolbox Everything
+                    ne vend pas les données et ne les utilise pas pour du profilage.
+                </p>
+            </section>
+
+            <section id="transferts">
+                <h2>6. Transferts et conservation</h2>
+                <p>
+                    Certains services tiers peuvent traiter des données hors de l'Union
+                    européenne. Toolbox Everything ne contrôle pas leur infrastructure. Les
+                    contenus locaux restent sur l'appareil ; les fichiers serveur sont
+                    temporaires ; les compteurs de sécurité expirent automatiquement ; les
+                    journaux suivent les critères de rotation décrits plus haut.
+                </p>
+            </section>
+
+            <section id="droits">
+                <h2>7. Vos droits</h2>
+                <p>
+                    Conformément au RGPD, vous pouvez demander l'accès, la rectification,
+                    l'effacement, la limitation ou l'opposition aux traitements qui vous
+                    concernent en écrivant à
+                    <a href="mailto:contact@doalo.fr">contact@doalo.fr</a>. Comme aucun compte
+                    n'est créé, il peut être nécessaire de fournir la date, l'heure et le
+                    contexte technique permettant d'identifier une trace. Vous pouvez aussi
+                    déposer une réclamation auprès de la CNIL.
+                </p>
+            </section>
+
+            <section id="modifications">
+                <h2>8. Modifications</h2>
+                <p>
+                    Cette politique peut évoluer avec les fonctionnalités, les prestataires
+                    ou les obligations légales. La date affichée en tête indique la dernière
+                    révision applicable.
+                </p>
+            </section>
+        </div>
+    </div>
+</article>
+{% endblock %}

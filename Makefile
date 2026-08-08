@@ -8,7 +8,7 @@ PIP := pip
 FLASK_APP := run.py
 PORT := 8000
 VERSION := $(shell if [ -f VERSION ]; then tr -d '\r\n' < VERSION; else echo "0.0.0"; fi)
-GHCR_IMAGE ?= ghcr.io/doalou/toolbox_everything
+GHCR_IMAGE ?= ghcr.io/nerieum/toolboxeverything
 TAILWIND_VERSION := 4.3.3
 TAILWIND := $(PYTHON) scripts/tailwind.py
 

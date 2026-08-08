@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Conditions d'utilisation · Toolbox Everything{% endblock %}
+
+{% block content %}
+<article class="legal-page">
+    <header class="legal-hero legal-hero--terms">
+        <p class="legal-hero__eyebrow">Informations légales · 02</p>
+        <h1>Conditions d'utilisation</h1>
+        <p class="legal-hero__lede">
+            Ces conditions encadrent l'accès au site Web et à l'application mobile
+            Toolbox Everything.
+        </p>
+        <p class="legal-hero__updated">Dernière mise à jour : 8 août 2026</p>
+    </header>
+
+    <div class="legal-layout">
+        <nav class="legal-toc" aria-label="Sommaire">
+            <span>Sommaire</span>
+            <a href="#service">Le service</a>
+            <a href="#usage">Usage autorisé</a>
+            <a href="#contenus">Contenus tiers</a>
+            <a href="#responsabilite">Responsabilité</a>
+            <a href="#droit">Droit applicable</a>
+        </nav>
+
+        <div class="legal-copy">
+            <section id="acceptation">
+                <h2>1. Acceptation</h2>
+                <p>
+                    En utilisant Toolbox Everything, vous acceptez les présentes conditions.
+                    Si vous ne les acceptez pas, n'utilisez pas le service. L'éditeur est
+                    l'<strong>Association Nerieum</strong>, Strasbourg, France, joignable à
+                    <a href="mailto:contact@doalo.fr">contact@doalo.fr</a>.
+                </p>
+            </section>
+
+            <section id="service">
+                <h2>2. Description du service</h2>
+                <p>
+                    Toolbox Everything réunit des utilitaires de conversion, de génération,
+                    de traitement de texte, de QR code, de réseau, de PDF et de téléchargement
+                    de médias. Le site et l'application sont proposés en l'état, avec un accès
+                    susceptible d'évoluer, d'être limité ou interrompu pour maintenance,
+                    sécurité ou raisons techniques.
+                </p>
+            </section>
+
+            <section id="usage">
+                <h2>3. Usage autorisé</h2>
+                <p>Vous vous engagez à utiliser le service de façon légale et raisonnable. Il est interdit de :</p>
+                <ul>
+                    <li>porter atteinte aux droits d'auteur, droits voisins, marques ou autres droits de tiers ;</li>
+                    <li>contourner une mesure technique de protection ou une restriction d'accès ;</li>
+                    <li>envoyer du contenu malveillant, illégal ou portant atteinte à autrui ;</li>
+                    <li>saturer, automatiser abusivement, sonder ou perturber le service ;</li>
+                    <li>utiliser les résultats pour tromper, usurper une identité ou commettre une infraction.</li>
+                </ul>
+                <p>
+                    Des limitations de débit et des blocages temporaires peuvent être appliqués
+                    pour protéger l'infrastructure et les autres utilisateurs.
+                </p>
+            </section>
+
+            <section id="contenus">
+                <h2>4. Téléchargements et contenus tiers</h2>
+                <p>
+                    Vous devez disposer des droits ou autorisations nécessaires avant de
+                    télécharger, convertir, copier ou partager un contenu. La disponibilité
+                    technique d'une fonction ne constitue pas une autorisation juridique.
+                    Vous devez aussi respecter les conditions de la plateforme d'origine.
+                </p>
+                <p>
+                    Toolbox Everything n'héberge pas de catalogue de médias et ne revendique
+                    aucun droit sur les contenus traités. L'éditeur peut limiter ou retirer une
+                    intégration si elle devient incompatible avec la loi, les droits de tiers
+                    ou les conditions d'une plateforme.
+                </p>
+            </section>
+
+            <section id="fichiers">
+                <h2>5. Fichiers et sécurité</h2>
+                <p>
+                    Vous restez responsable des fichiers soumis et des résultats téléchargés.
+                    Conservez une copie des données importantes : les fichiers traités par le
+                    serveur sont temporaires et ne constituent pas une sauvegarde. Malgré les
+                    contrôles mis en place, aucun service connecté ne peut garantir une sécurité
+                    ou une disponibilité absolue.
+                </p>
+            </section>
+
+            <section id="propriete">
+                <h2>6. Propriété intellectuelle du service</h2>
+                <p>
+                    Le code du site Web est distribué sous licence MIT. Les bibliothèques,
+                    polices, icônes et composants tiers restent soumis à leurs licences
+                    respectives. Sauf licence explicite contraire, le nom, le logo, les textes
+                    et les éléments visuels de Toolbox Everything restent protégés.
+                </p>
+            </section>
+
+            <section id="responsabilite">
+                <h2>7. Garanties et responsabilité</h2>
+                <p>
+                    Le service est fourni sans garantie de disponibilité continue, de résultat
+                    particulier ou de compatibilité avec tous les fichiers et appareils. Dans
+                    les limites permises par la loi, l'éditeur ne répond pas des dommages
+                    indirects, pertes de données, interruptions ou usages illicites résultant
+                    de l'utilisation du service. Les garanties légales impératives restent
+                    applicables.
+                </p>
+            </section>
+
+            <section id="modification">
+                <h2>8. Modification et fin d'accès</h2>
+                <p>
+                    Les fonctionnalités et ces conditions peuvent être modifiées. La date de
+                    révision figure en tête de page. L'accès peut être suspendu en cas d'abus,
+                    de risque de sécurité, d'obligation légale ou d'arrêt du service.
+                </p>
+            </section>
+
+            <section id="droit">
+                <h2>9. Droit applicable</h2>
+                <p>
+                    Les présentes conditions sont régies par le droit français, sous réserve
+                    des règles impératives protégeant les consommateurs dans leur pays de
+                    résidence. Avant tout litige, vous pouvez écrire à
+                    <a href="mailto:contact@doalo.fr">contact@doalo.fr</a> afin de rechercher
+                    une solution amiable.
+                </p>
+            </section>
+
+            <section id="confidentialite">
+                <h2>10. Confidentialité</h2>
+                <p>
+                    Le traitement des données est détaillé dans la
+                    <a href="{{ url_for('privacy_policy') }}">politique de confidentialité</a>.
+                </p>
+            </section>
+        </div>
+    </div>
+</article>
+{% endblock %}

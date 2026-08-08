@@ -16,9 +16,13 @@ import hashlib
 import os
 import shutil
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager, suppress
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from filelock import FileLock
 from flask import (
     Blueprint,
     after_this_request,
@@ -91,25 +95,103 @@ def _get_format_string(quality: str) -> str:
 
 
 def _common_ydl_opts() -> dict[str, Any]:
-    return {
+    opts: dict[str, Any] = {
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
         "retries": 3,
         "fragment_retries": 3,
-        "http_headers": {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/126.0.0.0 Safari/537.36"
-            )
-        },
     }
+
+    deno_path = os.getenv("YTDLP_DENO_PATH", "").strip() or shutil.which("deno")
+    if deno_path:
+        opts["js_runtimes"] = {"deno": {"path": deno_path}}
+
+    cookie_file = os.getenv("YTDLP_COOKIES_FILE", "").strip()
+    if cookie_file:
+        opts["cookiefile"] = cookie_file
+
+    user_agent = os.getenv("YTDLP_USER_AGENT", "").strip()
+    if user_agent:
+        opts["http_headers"] = {"User-Agent": user_agent}
+
+    return opts
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(64 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _prepare_cookie_jar(source_file: str, state_dir: Path) -> str:
+    """Initialise le cookie jar persistant et le rafraîchit si la source change."""
+    source = Path(source_file)
+    state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    cookie_jar = state_dir / "youtube-cookies.txt"
+    source_marker = state_dir / "youtube-cookies.source.sha256"
+    source_digest = _file_sha256(source)
+
+    try:
+        previous_digest = source_marker.read_text(encoding="ascii").strip()
+    except OSError:
+        previous_digest = ""
+
+    if not cookie_jar.is_file() or previous_digest != source_digest:
+        cookie_fd, temporary_name = tempfile.mkstemp(
+            prefix=".youtube-cookies-", suffix=".tmp", dir=state_dir
+        )
+        os.close(cookie_fd)
+        temporary_cookie_jar = Path(temporary_name)
+        try:
+            shutil.copyfile(source, temporary_cookie_jar)
+            temporary_cookie_jar.chmod(0o600)
+            os.replace(temporary_cookie_jar, cookie_jar)
+            source_marker.write_text(source_digest, encoding="ascii")
+            source_marker.chmod(0o600)
+        finally:
+            with suppress(FileNotFoundError):
+                temporary_cookie_jar.unlink()
+
+    return str(cookie_jar)
+
+
+@contextmanager
+def _youtube_dl(extra_opts: dict[str, Any] | None = None) -> Iterator[YoutubeDL]:
+    """Crée une instance yt-dlp avec un cookie jar persistant et sérialisé."""
+    opts = {**_common_ydl_opts(), **(extra_opts or {})}
+    source_cookie_file = opts.pop("cookiefile", None)
+
+    if not source_cookie_file:
+        with YoutubeDL(opts) as ydl:
+            yield ydl
+        return
+
+    configured_state_dir = os.getenv("YTDLP_COOKIES_STATE_DIR", "").strip()
+    state_dir = (
+        Path(configured_state_dir)
+        if configured_state_dir
+        else Path(tempfile.gettempdir()) / "toolbox-ytdlp"
+    )
+    state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+
+    with FileLock(state_dir / "youtube-cookies.lock", timeout=900):
+        opts["cookiefile"] = _prepare_cookie_jar(source_cookie_file, state_dir)
+        with YoutubeDL(opts) as ydl:
+            yield ydl
 
 
 def _classify_yt_error(message: str) -> tuple[int, str]:
     """Transforme une erreur yt-dlp en couple (status, message humain)."""
     msg_lower = message.lower()
+    if "not a bot" in msg_lower:
+        return (
+            503,
+            "YouTube bloque les requêtes anonymes de cette instance. "
+            "Une session serveur valide est nécessaire.",
+        )
     if "video unavailable" in msg_lower or "private video" in msg_lower:
         return 400, "Cette vidéo n'est pas accessible (privée, supprimée ou géo-restreinte)."
     if "sign in to confirm your age" in msg_lower:
@@ -147,7 +229,7 @@ def get_video_info():
         return jsonify(_REJECTION_PAYLOAD), 400
 
     try:
-        with YoutubeDL({**_common_ydl_opts(), "extract_flat": False}) as ydl:
+        with _youtube_dl({"extract_flat": False}) as ydl:
             info = ydl.extract_info(url, download=False)
             if info is None:
                 return (
@@ -214,7 +296,6 @@ def download_video():
 
     try:
         base_opts = {
-            **_common_ydl_opts(),
             "outtmpl": os.path.join(temp_dir, "%(title)s.%(ext)s"),
             "ffmpeg_location": ffmpeg_path,
         }
@@ -239,7 +320,7 @@ def download_video():
                 "concurrent_fragment_downloads": 4,
             }
 
-        with YoutubeDL(ydl_opts) as ydl:
+        with _youtube_dl(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             if not info:
                 return jsonify({"error": "Impossible de télécharger la vidéo."}), 400

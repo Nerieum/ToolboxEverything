@@ -223,12 +223,16 @@
 
         <footer class="site-footer">
             <div class="max-w-7xl mx-auto py-5 px-4 sm:px-6 lg:px-8 site-footer__row">
-                <span>© {{ current_year }} · v{{ app_version }}</span>
+                <span>© {{ current_year }} Association Nerieum · v{{ app_version }}</span>
                 <span class="site-footer__motto">Tout sous la main.</span>
-                <a href="https://github.com/doalou/toolbox_everything" target="_blank" rel="noopener noreferrer"
-                   class="site-footer__link" aria-label="GitHub">
-                    <i class="fab fa-github text-lg"></i>
-                </a>
+                <nav class="site-footer__links" aria-label="Informations légales">
+                    <a href="{{ url_for('privacy_policy') }}" class="site-footer__link">Confidentialité</a>
+                    <a href="{{ url_for('terms_of_use') }}" class="site-footer__link">Conditions</a>
+                    <a href="https://github.com/Nerieum/ToolboxEverything" target="_blank" rel="noopener noreferrer"
+                       class="site-footer__link site-footer__github" aria-label="Code source sur GitHub">
+                        <i class="fab fa-github text-lg" aria-hidden="true"></i>
+                    </a>
+                </nav>
             </div>
         </footer>
     </div>

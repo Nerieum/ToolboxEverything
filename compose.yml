@@ -7,7 +7,7 @@
 #        docker compose up -d --build
 #
 #   2) IMAGE GHCR (prod) :
-#        export TOOLBOX_IMAGE=ghcr.io/doalou/toolbox_everything:2.0.0
+#        export TOOLBOX_IMAGE=ghcr.io/nerieum/toolboxeverything:2.0.1
 #        docker compose pull
 #        docker compose up -d
 #
@@ -28,6 +28,7 @@ services:
       - toolbox_uploads:/app/uploads
       - toolbox_downloads:/app/downloads
       - toolbox_logs:/app/logs
+      - toolbox_ytdlp_state:/var/lib/toolbox/yt-dlp
     environment:
       - FLASK_APP=run.py
       - FLASK_ENV=${FLASK_ENV:-production}
@@ -41,6 +42,11 @@ services:
       - LIBRESPEED_PUBLIC_URL=${LIBRESPEED_PUBLIC_URL:-http://localhost:8081}
       # Rate limiter : Redis partagé entre les workers gunicorn
       - RATELIMIT_STORAGE_URI=${RATELIMIT_STORAGE_URI:-redis://redis:6379/0}
+      # Authentification yt-dlp optionnelle (le fichier doit être monté dans le conteneur)
+      - YTDLP_COOKIES_FILE=${YTDLP_COOKIES_FILE:-}
+      - YTDLP_COOKIES_STATE_DIR=${YTDLP_COOKIES_STATE_DIR:-/var/lib/toolbox/yt-dlp}
+      - YTDLP_USER_AGENT=${YTDLP_USER_AGENT:-}
+      - YTDLP_DENO_PATH=${YTDLP_DENO_PATH:-}
     depends_on:
       stirling-pdf:
         condition: service_started
@@ -233,3 +239,4 @@ volumes:
   toolbox_uploads:
   toolbox_downloads:
   toolbox_logs:
+  toolbox_ytdlp_state:
