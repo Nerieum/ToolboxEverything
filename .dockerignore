@@ -35,6 +35,8 @@ Thumbs.db
 logs/
 uploads/
 downloads/
+secrets/
+youtube-cookies.txt
 bin/
 build/
 dist/

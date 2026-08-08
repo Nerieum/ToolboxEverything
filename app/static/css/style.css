@@ -2592,8 +2592,241 @@ input, select, textarea {
     color: var(--ink);
 }
 
+.site-footer__links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.site-footer__github {
+    display: inline-flex;
+}
+
+@media (max-width: 640px) {
+    .site-footer__row {
+        flex-wrap: wrap;
+        gap: 0.75rem 1rem;
+    }
+
+    .site-footer__motto {
+        display: none;
+    }
+
+    .site-footer__links {
+        gap: 0.75rem;
+        font-size: 0.78rem;
+    }
+}
+
 /* ------------------------------------------------------------------ */
-/* 14. Pages d'erreur                                                 */
+/* 14. Pages légales                                                  */
+/* ------------------------------------------------------------------ */
+.legal-page {
+    width: min(100%, 70rem);
+    margin: 0 auto;
+    padding: 1.5rem 1rem 4rem;
+}
+
+.legal-hero {
+    position: relative;
+    padding: clamp(2rem, 6vw, 4.5rem) clamp(1.25rem, 5vw, 4rem);
+    overflow: hidden;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+}
+
+.legal-hero::after {
+    position: absolute;
+    top: -3.5rem;
+    right: -3.5rem;
+    width: 9rem;
+    height: 9rem;
+    border: 1.25rem solid var(--brand-blue-soft);
+    transform: rotate(45deg);
+    content: "";
+}
+
+.legal-hero--terms::after {
+    border-color: var(--brand-pink-soft);
+}
+
+.legal-hero__eyebrow,
+.legal-hero__updated,
+.legal-toc > span {
+    color: var(--faint);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.legal-hero h1 {
+    max-width: 48rem;
+    margin-top: 0.8rem;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 7vw, 5.2rem);
+    font-weight: 580;
+    letter-spacing: -0.045em;
+    line-height: 0.96;
+}
+
+.legal-hero__lede {
+    max-width: 42rem;
+    margin-top: 1.4rem;
+    color: var(--ink-soft);
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    line-height: 1.65;
+}
+
+.legal-hero__updated {
+    margin-top: 1.5rem;
+}
+
+.legal-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 1rem;
+    border: 1px solid var(--line-strong);
+    background: var(--line-strong);
+}
+
+.legal-summary > div {
+    display: flex;
+    min-height: 8rem;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 1.25rem;
+    background: var(--surface);
+}
+
+.legal-summary strong {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.legal-summary span {
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+
+.legal-layout {
+    display: grid;
+    grid-template-columns: 12rem minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 5rem);
+    margin-top: clamp(2.5rem, 7vw, 5rem);
+}
+
+.legal-toc {
+    position: sticky;
+    top: 6.5rem;
+    display: flex;
+    height: max-content;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding-left: 1rem;
+    border-left: 1px solid var(--line-strong);
+}
+
+.legal-toc > span {
+    margin-bottom: 0.25rem;
+}
+
+.legal-toc a {
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-decoration: none;
+    transition: color var(--dur-fast) ease;
+}
+
+.legal-toc a:hover {
+    color: var(--accent-ink);
+}
+
+.legal-copy {
+    min-width: 0;
+}
+
+.legal-copy section {
+    padding-bottom: 2.5rem;
+    scroll-margin-top: 6.5rem;
+}
+
+.legal-copy section + section {
+    padding-top: 2.5rem;
+    border-top: 1px solid var(--line);
+}
+
+.legal-copy h2 {
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 4vw, 2.15rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+}
+
+.legal-copy h3 {
+    margin-top: 1.5rem;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.legal-copy p,
+.legal-copy li {
+    color: var(--muted);
+    font-size: 0.93rem;
+    line-height: 1.75;
+}
+
+.legal-copy p {
+    margin-top: 0.9rem;
+}
+
+.legal-copy ul {
+    display: grid;
+    gap: 0.55rem;
+    margin: 1rem 0 0;
+    padding-left: 1.25rem;
+    list-style: square;
+}
+
+.legal-copy a {
+    color: var(--accent-ink);
+    font-weight: 600;
+    text-underline-offset: 0.2em;
+}
+
+@media (max-width: 760px) {
+    .legal-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .legal-summary > div {
+        min-height: 0;
+    }
+
+    .legal-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .legal-toc {
+        position: static;
+        display: none;
+    }
+
+    .legal-hero::after {
+        width: 6rem;
+        height: 6rem;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* 15. Pages d'erreur                                                 */
 /* ------------------------------------------------------------------ */
 .error-page {
     min-height: 55vh;

@@ -1,13 +1,16 @@
 # Toolbox Everything
 
 > Une boîte à outils web, modulaire et sans prise de tête : télécharger une vidéo (YouTube, Vimeo, Dailymotion, TikTok), convertir un média, bidouiller un QR code ou un hash, et manipuler des PDF sans quitter son navigateur.
-# Le projet est actuellement en cours de refonte, la description ci-dessous correspond à l'ancienne version et une nouvelle version sera bientôt proposée.
 
 Stack : **Flask + Tailwind**, tout en Docker, prêt à être posé derrière un reverse proxy.
-Interface **sobre et utilitaire** (v2.0.0) : couche de tokens CSS, thème clair/sombre
+Interface **sobre et utilitaire** (v2.0.1) : couche de tokens CSS, thème clair/sombre
 piloté par variables, Fraunces self-hébergée et zéro dépendance front tierce au runtime.
 
-![version](https://img.shields.io/badge/version-2.0.0-blue)
+Site public : <https://toolbox.doalo.fr>
+
+Toolbox Everything est édité et exploité par l'**association Nerieum**.
+
+![version](https://img.shields.io/badge/version-2.0.1-blue)
 ![python](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)
 ![flask](https://img.shields.io/badge/flask-3.1-000000?logo=flask)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -33,7 +36,7 @@ piloté par variables, Fraunces self-hébergée et zéro dépendance front tierc
 Un **unique** `compose.yml` couvre les deux modes de déploiement, choix via `TOOLBOX_IMAGE` :
 
 ```bash
-git clone https://github.com/doalou/toolbox_everything.git
+git clone https://github.com/Nerieum/ToolboxEverything.git
 cd toolbox_everything
 cp env.example .env          # édite au moins SECRET_KEY
 docker compose up -d --build # build local (dev / CI)
@@ -42,7 +45,7 @@ docker compose up -d --build # build local (dev / CI)
 Ou en prod avec l'image publique GHCR :
 
 ```bash
-export TOOLBOX_IMAGE=ghcr.io/doalou/toolbox_everything:2.0.0
+export TOOLBOX_IMAGE=ghcr.io/nerieum/toolboxeverything:2.0.1
 docker compose pull && docker compose up -d
 ```
 
@@ -90,19 +93,92 @@ Tout se passe dans `.env` (copié depuis `env.example`) :
 | `FLASK_ENV` | `development` ou `production` | `production` |
 | `MAX_CONTENT_LENGTH` | Taille max des uploads (octets) | `536870912` (512 MB) |
 | `FFMPEG_PATH` | Chemin explicite vers FFmpeg | auto-détecté (`shutil.which`) |
+| `YTDLP_COOKIES_FILE` | Fichier Netscape de cookies pour yt-dlp | désactivé |
+| `YTDLP_COOKIES_STATE_DIR` | Cookie jar inscriptible et persistant | `/var/lib/toolbox/yt-dlp` |
+| `YTDLP_USER_AGENT` | User-Agent associé aux cookies yt-dlp | défaut yt-dlp |
+| `YTDLP_DENO_PATH` | Chemin du runtime Deno | auto-détecté (`shutil.which`) |
 | `STIRLING_PDF_URL` | URL **interne** de Stirling PDF (healthcheck serveur) | `http://stirling-pdf:8080` |
 | `STIRLING_PDF_PUBLIC_URL` | URL **publique** utilisée par l'iframe (navigateur) | `http://localhost:8080` |
 | `LIBRESPEED_URL` | URL **interne** de LibreSpeed (healthcheck serveur) | `http://librespeed` |
 | `LIBRESPEED_PUBLIC_URL` | URL **publique** utilisée par l'iframe (navigateur) | `http://localhost:8081` |
 | `RATELIMIT_STORAGE_URI` | Backend du rate limiter (Redis en prod) | `redis://redis:6379/0` |
-| `TOOLBOX_IMAGE` | Image Docker à tirer depuis GHCR | `ghcr.io/doalou/toolbox_everything:2.0.0` |
+| `TOOLBOX_IMAGE` | Image Docker à tirer depuis GHCR | `ghcr.io/nerieum/toolboxeverything:2.0.1` |
 | `TOOLBOX_PORT` / `STIRLING_PORT` / `LIBRESPEED_PORT` | Ports hôte exposés | `8000` / `8080` / `8081` |
+
+### YouTube : Deno et authentification
+
+L'image Docker contient déjà Deno et `yt-dlp-ejs`. Ils permettent à yt-dlp de
+résoudre les challenges JavaScript de YouTube et ne demandent aucune
+configuration.
+
+Un fichier de cookies est uniquement nécessaire lorsque YouTube répond
+« Sign in to confirm you're not a bot ». Le `.env` contient alors le chemin du
+fichier, jamais les cookies eux-mêmes ni un token.
+
+#### Préparer le fichier de cookies
+
+1. Ouvrir une fenêtre privée, puis se connecter avec un compte YouTube dédié.
+2. Dans le même onglet, ouvrir `https://www.youtube.com/robots.txt`.
+3. Exporter les cookies `youtube.com` au format Netscape avec
+   **Get cookies.txt LOCALLY** (Chrome/Chromium) ou **cookies.txt** (Firefox).
+4. Fermer la fenêtre privée et ne plus utiliser cette session dans le navigateur.
+
+Les liens des extensions et les précautions à suivre sont maintenus dans la
+[documentation officielle yt-dlp](https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies).
+Ne jamais utiliser l'ancienne extension Chrome **Get cookies.txt** sans
+« LOCALLY », signalée comme malveillante par yt-dlp.
+
+Déposer ensuite le fichier à la racine du projet :
+
+```bash
+install -d -m 700 secrets
+install -m 644 /path/to/youtube-cookies.txt secrets/youtube-cookies.txt
+```
+
+Le dossier privé protège le fichier sur l'hôte. Le mode `644` permet au
+processus non-root du conteneur de le lire ; le montage Docker reste en lecture
+seule. Pour laisser yt-dlp actualiser son cookie jar sans modifier le secret,
+l'application initialise une copie inscriptible dans le volume Docker
+`toolbox_ytdlp_state`, puis conserve les mises à jour reçues de YouTube. Les
+workers partagent ce jar sous verrou. Le remplacement du fichier source
+réinitialise automatiquement la copie grâce à son empreinte SHA-256. Le dossier
+`secrets/` est exclu de Git et du contexte de build.
+
+#### Activer les cookies
+
+Dans `.env` :
+
+```dotenv
+YTDLP_COOKIES_FILE=/run/secrets/youtube-cookies.txt
+YTDLP_COOKIES_STATE_DIR=/var/lib/toolbox/yt-dlp
+```
+
+Dans le service `toolbox` de `compose.yml` :
+
+```yaml
+volumes:
+  - ./secrets/youtube-cookies.txt:/run/secrets/youtube-cookies.txt:ro
+```
+
+Recréer le service puis tester la session :
+
+```bash
+docker compose up -d --force-recreate toolbox
+docker compose exec toolbox yt-dlp \
+  --cookies /run/secrets/youtube-cookies.txt \
+  --simulate --print title 'https://www.youtube.com/watch?v=BaW_jenozKc'
+```
+
+Si YouTube redemande une connexion, refaire l'export et remplacer le fichier.
+Un PO Token est un mécanisme différent et n'est pas configuré par ce projet ;
+le [guide yt-dlp](https://github.com/yt-dlp/yt-dlp/wiki/PO-Token-Guide) ne devient
+pertinent que si l'erreur mentionne explicitement un PO Token.
 
 ---
 
 ## Versioning et images GHCR
 
-La version de référence est `VERSION`. Pour la v2.0.0, elle alimente :
+La version de référence est `VERSION`. Pour la v2.0.1, elle alimente :
 
 - La version affichée dans le footer et `/health`.
 - Les tags locaux générés par `make docker-build`.
@@ -111,9 +187,9 @@ La version de référence est `VERSION`. Pour la v2.0.0, elle alimente :
 Images publiées :
 
 ```bash
-ghcr.io/doalou/toolbox_everything:2.0.0
-ghcr.io/doalou/toolbox_everything:2.0
-ghcr.io/doalou/toolbox_everything:latest
+ghcr.io/nerieum/toolboxeverything:2.0.1
+ghcr.io/nerieum/toolboxeverything:2.0
+ghcr.io/nerieum/toolboxeverything:latest
 ```
 
 Règle de release :
@@ -122,16 +198,17 @@ Règle de release :
 2. Reporter la version dans le badge README, les exemples GHCR et `CHANGELOG.md`.
 3. Merger sur `main`.
 4. Le workflow Docker détecte le bump de `VERSION` sur ce push et publie les tags
-   **immuables** `X.Y.Z` et `X.Y`, plus `latest`. Les commits sans bump (et le cron
-   nocturne) ne réécrivent que `latest`.
+   `X.Y.Z` (immuable), `X.Y` (dernière correction de la branche mineure) et
+   `latest`. Les commits sans bump, ainsi que le cron nocturne, ne réécrivent que
+   `latest`.
 5. Le workflow `Release tag` crée en parallèle le tag Git `vX.Y.Z` (marqueur d'historique).
 
 Exemple pour publier une nouvelle version :
 
 ```bash
-echo 2.0.1 > VERSION
+echo 2.0.2 > VERSION
 git add VERSION CHANGELOG.md README.md
-git commit -m "Release 2.0.1"
+git commit -m "Release 2.0.2"
 git push origin main
 ```
 
