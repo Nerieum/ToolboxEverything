@@ -7,6 +7,45 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [2.0.1] - 2026-08-08
+
+### Informations légales
+
+- Ajout d'une politique de confidentialité commune au site Web et à
+  l'application mobile, accessible sur `/confidentialite`.
+- Ajout des conditions d'utilisation sur `/conditions-utilisation`, avec un
+  encadrement explicite des téléchargements et contenus tiers.
+- Ajout d'alias stables `/privacy` et `/terms`, des liens dans le pied de page
+  et de tests de disponibilité.
+- Documentation des traitements locaux, fichiers temporaires, journaux,
+  limitations de débit, services réseau tiers et droits RGPD.
+- Identification de l'association Nerieum comme éditrice et exploitante du
+  service dans les pages légales, le pied de page et les métadonnées de l'image.
+
+### Téléchargeur YouTube
+
+- Ajout de Deno 2.9.5 et `yt-dlp-ejs` dans l'image pour résoudre les challenges
+  JavaScript récents de YouTube.
+- Prise en charge optionnelle d'un export Netscape de cookies via
+  `YTDLP_COOKIES_FILE`, conservé hors du dépôt et monté en lecture seule.
+- Cookie jar inscriptible conservé dans un volume Docker, initialisé depuis le
+  secret en lecture seule et partagé sous verrou entre les workers Gunicorn.
+- Réinitialisation automatique du jar persistant lorsque l'empreinte SHA-256 de
+  l'export source change.
+- Message explicite et statut `503` lorsque YouTube exige une session serveur.
+- Correction du répertoire personnel de l'utilisateur non-root et désactivation
+  du control socket Gunicorn incompatible avec les permissions du conteneur.
+
+### Distribution et documentation
+
+- Références GitHub et GHCR alignées sur le nouvel emplacement
+  `Nerieum/ToolboxEverything` du dépôt.
+- Publication de l'URL de l'instance officielle et documentation de la procédure
+  d'export, de montage et de renouvellement des cookies YouTube.
+- Suppression du workflow CodeQL redondant avec l'analyse par défaut de GitHub.
+
+---
+
 ## [2.0.0] - 2026-07-19
 
 Refonte de fond en comble sur trois fronts (design, backend, outillage), à

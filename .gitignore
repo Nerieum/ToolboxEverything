@@ -176,6 +176,8 @@ cython_debug/
 uploads/
 downloads/
 logs/
+/secrets/
+youtube-cookies.txt
 
 # Tailwind — CSS généré (rebuild via Dockerfile ou `make tailwind-build`)
 app/static/css/tailwind.css

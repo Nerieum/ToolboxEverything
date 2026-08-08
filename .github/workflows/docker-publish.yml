@@ -54,7 +54,7 @@ jobs:
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
           echo "minor=${MAJOR}.${MINOR}" >> "${GITHUB_OUTPUT}"
 
-          # `release=true` => on publie les tags de version IMMUABLES (X.Y.Z, X.Y).
+          # `release=true` => on publie X.Y.Z (immuable) et X.Y (canal mineur mobile).
           # Vrai uniquement sur un tag Git, ou sur un push main qui modifie VERSION.
           # Ainsi le cron nocturne et les commits sans bump ne réécrivent que `latest`.
           RELEASE=false

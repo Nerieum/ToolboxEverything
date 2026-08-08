@@ -20,7 +20,7 @@ def _read_version() -> str:
     version_file = Path(__file__).resolve().parent.parent / "VERSION"
     if version_file.exists():
         return version_file.read_text(encoding="utf-8").strip()
-    return "2.0.0"
+    return "2.0.1"
 
 
 __version__ = _read_version()

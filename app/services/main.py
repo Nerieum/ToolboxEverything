@@ -294,6 +294,22 @@ def create_app(config_class: object | None = None) -> Flask:
     def index():
         return render_template("index.html")
 
+    @app.route("/confidentialite")
+    def privacy_policy():
+        return render_template("legal/privacy.html")
+
+    @app.route("/conditions-utilisation")
+    def terms_of_use():
+        return render_template("legal/terms.html")
+
+    @app.route("/privacy")
+    def privacy_redirect():
+        return redirect(url_for("privacy_policy"), code=308)
+
+    @app.route("/terms")
+    def terms_redirect():
+        return redirect(url_for("terms_of_use"), code=308)
+
     @app.route("/downloader")
     def downloader_redirect():
         return redirect(url_for("downloader.index"))

@@ -19,13 +19,42 @@ def test_index_renders(client):
     resp = client.get("/")
     assert resp.status_code == 200
     assert b"Toolbox" in resp.data
-    assert b"v2.0.0" in resp.data
+    assert b"v2.0.1" in resp.data
     assert b"Speedtest" in resp.data
     assert b"/speedtest/" in resp.data
 
 
 def test_version_file_is_release_source():
-    assert Path("VERSION").read_text(encoding="utf-8").strip() == "2.0.0"
+    assert Path("VERSION").read_text(encoding="utf-8").strip() == "2.0.1"
+
+
+def test_legal_pages_are_public_and_linked(client):
+    home = client.get("/")
+    assert b'href="/confidentialite"' in home.data
+    assert b'href="/conditions-utilisation"' in home.data
+
+    privacy = client.get("/confidentialite")
+    assert privacy.status_code == 200
+    assert "Politique de confidentialité".encode() in privacy.data
+    assert b"Association Nerieum" in privacy.data
+    assert b"contact@doalo.fr" in privacy.data
+
+    terms = client.get("/conditions-utilisation")
+    assert terms.status_code == 200
+    assert b"Conditions d'utilisation" in terms.data
+    assert b"Association Nerieum" in terms.data
+    assert b"contact@doalo.fr" in terms.data
+
+    assert b"Association Nerieum" in home.data
+
+
+def test_legal_english_aliases_redirect(client):
+    privacy = client.get("/privacy", follow_redirects=False)
+    terms = client.get("/terms", follow_redirects=False)
+    assert privacy.status_code == 308
+    assert privacy.headers["Location"].endswith("/confidentialite")
+    assert terms.status_code == 308
+    assert terms.headers["Location"].endswith("/conditions-utilisation")
 
 
 def test_base_template_loads_local_css_assets(client):
@@ -270,4 +299,4 @@ def test_editorial_design_system_present(client):
     assert b"Pas de compte" in resp.data
     assert b"Pourquoi utiliser nos outils" not in resp.data
     assert b"js/shell.js" in resp.data
-    assert b"css/style.css?v=2.0.0-" in resp.data
+    assert b"css/style.css?v=2.0.1-" in resp.data
