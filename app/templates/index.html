@@ -5,7 +5,6 @@
 <section class="home-shell">
     <header class="home-cover">
         <div class="home-cover__copy">
-            <p class="home-cover__eyebrow">Boîte à outils personnelle · {{ essentials_tools_all|length + 5 }} fonctions</p>
             <h1 class="home-cover__title">
                 Les outils qu’on finit<br>toujours par <em>chercher.</em>
             </h1>
@@ -16,7 +15,6 @@
         </div>
 
         <div class="home-cover__aside">
-            <span class="home-cover__index" aria-hidden="true">00 / 05</span>
             <p>Pas de compte, pas de détour. Les petits outils s’exécutent directement dans le navigateur.</p>
         </div>
     </header>
@@ -24,7 +22,6 @@
     <section class="home-stations" aria-labelledby="home-stations-title">
         <div class="home-section-heading">
             <h2 id="home-stations-title">Choisir un atelier</h2>
-            <span>5 portes d’entrée</span>
         </div>
 
         <nav class="home-workbench" aria-label="Choisir un atelier">
@@ -61,7 +58,6 @@
         <nav class="home-shortcut-grid" aria-label="Outils essentiels">
             {% for tool in essentials_tools_all %}
                 <a href="{{ url_for(tool.endpoint) }}" class="home-shortcut">
-                    <span class="home-shortcut__index">{{ '%02d'|format(loop.index) }}</span>
                     <span class="home-shortcut__icon site-dropdown__icon--{{ tool.accent }}" aria-hidden="true">
                         <i class="fas {{ tool.icon }}"></i>
                     </span>
@@ -69,14 +65,12 @@
                         <strong>{{ tool.short_title }}</strong>
                         <small>{{ tool.caption }}</small>
                     </span>
-                    <i class="fas fa-arrow-right home-shortcut__arrow" aria-hidden="true"></i>
                 </a>
             {% endfor %}
         </nav>
     </section>
 
     <footer class="home-footnote">
-        <span>Local d’abord</span>
         <p>Les outils essentiels travaillent dans cet onglet. Les fichiers envoyés aux convertisseurs sont temporaires.</p>
     </footer>
 </section>

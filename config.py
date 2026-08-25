@@ -34,9 +34,14 @@ class Config:
     MAX_BATCH_SIZE: int = 20
     MAX_BATCH_BYTES: int = 200 * 1024 * 1024  # taille cumulée d'un batch
 
-    ALLOWED_IMAGE_EXTENSIONS: frozenset[str] = frozenset({"jpg", "jpeg", "png", "gif", "webp"})
+    ALLOWED_IMAGE_EXTENSIONS: frozenset[str] = frozenset(
+        {"jpg", "jpeg", "png", "gif", "webp", "bmp", "tiff"}
+    )
     ALLOWED_VIDEO_EXTENSIONS: frozenset[str] = frozenset({"mp4", "avi", "mov", "mkv", "webm"})
-    ALLOWED_MEDIA_EXTENSIONS: frozenset[str] = ALLOWED_VIDEO_EXTENSIONS | ALLOWED_IMAGE_EXTENSIONS
+    ALLOWED_AUDIO_EXTENSIONS: frozenset[str] = frozenset({"mp3", "wav", "flac", "ogg", "m4a"})
+    ALLOWED_MEDIA_EXTENSIONS: frozenset[str] = (
+        ALLOWED_VIDEO_EXTENSIONS | ALLOWED_IMAGE_EXTENSIONS | ALLOWED_AUDIO_EXTENSIONS
+    )
 
     @classmethod
     def get_ffmpeg_path(cls) -> str | None:

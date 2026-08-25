@@ -7,7 +7,7 @@
 #        docker compose up -d --build
 #
 #   2) IMAGE GHCR (prod) :
-#        export TOOLBOX_IMAGE=ghcr.io/nerieum/toolboxeverything:2.0.1
+#        export TOOLBOX_IMAGE=ghcr.io/nerieum/toolboxeverything:2.1.0
 #        docker compose pull
 #        docker compose up -d
 #

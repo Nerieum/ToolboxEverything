@@ -19,13 +19,13 @@ def test_index_renders(client):
     resp = client.get("/")
     assert resp.status_code == 200
     assert b"Toolbox" in resp.data
-    assert b"v2.0.1" in resp.data
+    assert b"v2.1.0" in resp.data
     assert b"Speedtest" in resp.data
     assert b"/speedtest/" in resp.data
 
 
 def test_version_file_is_release_source():
-    assert Path("VERSION").read_text(encoding="utf-8").strip() == "2.0.1"
+    assert Path("VERSION").read_text(encoding="utf-8").strip() == "2.1.0"
 
 
 def test_legal_pages_are_public_and_linked(client):
@@ -110,7 +110,7 @@ def test_responsive_header_css_is_not_overridden():
     assert ".header-icon-button--mobile" in css
     assert ".theme-toggle__icon--sun" in css
     assert ".theme-toggle__icon--moon" in css
-    assert ".media-file-grid" in css
+    assert ".conv-grid" in css
     assert ".home-cover" in css
     assert ".home-workbench" in css
     assert ".home-tool" in css
@@ -299,4 +299,4 @@ def test_editorial_design_system_present(client):
     assert b"Pas de compte" in resp.data
     assert b"Pourquoi utiliser nos outils" not in resp.data
     assert b"js/shell.js" in resp.data
-    assert b"css/style.css?v=2.0.1-" in resp.data
+    assert b"css/style.css?v=2.1.0-" in resp.data

@@ -36,11 +36,18 @@ _SIGNATURES: dict[str, tuple[bytes, ...]] = {
     "png": (b"\x89PNG\r\n\x1a\n",),
     "gif": (b"GIF87a", b"GIF89a"),
     "webp": (b"RIFF",),
+    "bmp": (b"BM",),
+    "tiff": (b"II*\x00", b"MM\x00*"),
     "mp4": (b"ftyp",),
     "mov": (b"ftyp",),
+    "m4a": (b"ftyp",),
     "webm": (b"\x1a\x45\xdf\xa3",),
     "mkv": (b"\x1a\x45\xdf\xa3",),
     "avi": (b"RIFF",),
+    "wav": (b"RIFF",),
+    "mp3": (b"ID3",),
+    "flac": (b"fLaC",),
+    "ogg": (b"OggS",),
 }
 
 
@@ -68,16 +75,24 @@ def _signature_matches(ext: str, head: bytes) -> bool:
     if not signatures:
         return False
 
-    if ext in {"mp4", "mov"}:
+    if ext in {"mp4", "mov", "m4a"}:
         return len(head) >= 12 and head[4:8] == b"ftyp"
 
-    if ext in {"webp", "avi"}:
+    if ext in {"webp", "avi", "wav"}:
         if len(head) < 12 or head[:4] != b"RIFF":
             return False
         marker = head[8:12]
         if ext == "webp":
             return marker == b"WEBP"
+        if ext == "wav":
+            return marker == b"WAVE"
         return marker == b"AVI "
+
+    if ext == "mp3":
+        # Tag ID3 ou frame sync MPEG (11 bits à 1) pour les MP3 sans tag.
+        if head.startswith(b"ID3"):
+            return True
+        return len(head) >= 2 and head[0] == 0xFF and (head[1] & 0xE0) == 0xE0
 
     return any(head.startswith(sig) for sig in signatures)
 

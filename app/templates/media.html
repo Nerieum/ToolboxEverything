@@ -3,96 +3,115 @@
 {% block title %}Convertisseur média | Toolbox Everything{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-10">
+<div class="max-w-6xl mx-auto px-4 py-10">
     <div class="tool-hero">
         <h1 class="tool-hero__title">
-            Convertisseur <span class="tool-hero__accent">Média</span>
+            Convertisseur <span class="tool-hero__accent">média</span>
         </h1>
         <p class="tool-hero__subtitle">
-            Convertissez vos images et vidéos au format voulu.
+            Images, vidéos et audio&nbsp;: déposez, choisissez, récupérez.
+        </p>
+        <p class="tool-credit">
+            Conversion propulsée par
+            <a href="https://ffmpeg.org" target="_blank" rel="noopener noreferrer">FFmpeg</a>
+            (vidéo, audio) et
+            <a href="https://python-pillow.github.io" target="_blank" rel="noopener noreferrer">Pillow</a>
+            (images), logiciels libres. Archive .zip assemblée par
+            <a href="https://stuk.github.io/jszip/" target="_blank" rel="noopener noreferrer">JSZip</a>.
         </p>
     </div>
 
-    <div id="dropZone" class="tool-dropzone mb-6">
-        <input type="file" id="fileInput" class="hidden" accept="image/*,video/*" multiple>
-        <div class="flex justify-center gap-4 mb-4">
-            <div class="tool-dropzone__icon site-dropdown__icon--sky">
-                <i class="far fa-images text-xl"></i>
-            </div>
-            <div class="tool-dropzone__icon site-dropdown__icon--rose">
-                <i class="fas fa-video text-xl"></i>
-            </div>
-        </div>
+    <div id="dropZone" class="tool-dropzone conv-drop">
+        <span class="conv-drop__ghost" aria-hidden="true">C</span>
+        <input type="file" id="fileInput" class="hidden"
+               accept="image/*,video/*,audio/*" multiple
+               aria-label="Choisir des fichiers à convertir">
         <p class="tool-dropzone__title">Glissez vos fichiers ici</p>
         <p class="tool-dropzone__hint">
             ou
             <button type="button" data-browse-files
-                    class="tool-dropzone__browse">parcourez vos fichiers</button>
+                    class="tool-dropzone__browse">parcourez votre machine</button>,
+            plusieurs fichiers à la fois
         </p>
-        <p class="tool-dropzone__formats">JPG, PNG, WEBP, GIF, MP4, WEBM</p>
+        <p class="conv-formats">
+            <span><em class="conv-formats__fam conv-formats__fam--image">Images</em> JPG PNG WEBP GIF BMP TIFF</span>
+            <span><em class="conv-formats__fam conv-formats__fam--video">Vidéos</em> MP4 WEBM MKV MOV AVI</span>
+            <span><em class="conv-formats__fam conv-formats__fam--audio">Audio</em> MP3 WAV FLAC OGG M4A</span>
+        </p>
     </div>
 
-    <div id="conversionPanel" class="hidden space-y-5">
-        <div class="tool-panel">
-            <h3 class="tool-panel__heading">
-                <i class="fas fa-folder-open"></i>
-                Fichiers sélectionnés
-            </h3>
-            <div id="fileList" class="media-file-grid"></div>
+    <section id="convSettings" class="conv-settings" hidden>
+        <div class="conv-settings__row">
+            <div class="conv-settings__families">
+                <label class="conv-family" data-family-block="image" hidden>
+                    <span class="conv-family__tag conv-family__tag--image">Images</span>
+                    <select class="tool-select conv-family__select" data-format-select="image">
+                        <option value="webp" selected>WEBP</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="png">PNG</option>
+                        <option value="gif">GIF</option>
+                    </select>
+                </label>
+                <label class="conv-family" data-family-block="video" hidden>
+                    <span class="conv-family__tag conv-family__tag--video">Vidéos</span>
+                    <select class="tool-select conv-family__select" data-format-select="video">
+                        <optgroup label="Vidéo">
+                            <option value="mp4" selected>MP4</option>
+                            <option value="webm">WEBM</option>
+                        </optgroup>
+                        <optgroup label="Extraire l'audio">
+                            <option value="mp3">MP3</option>
+                            <option value="wav">WAV</option>
+                            <option value="flac">FLAC</option>
+                            <option value="ogg">OGG</option>
+                            <option value="m4a">M4A</option>
+                        </optgroup>
+                    </select>
+                </label>
+                <label class="conv-family" data-family-block="audio" hidden>
+                    <span class="conv-family__tag conv-family__tag--audio">Audio</span>
+                    <select class="tool-select conv-family__select" data-format-select="audio">
+                        <option value="mp3" selected>MP3</option>
+                        <option value="wav">WAV</option>
+                        <option value="flac">FLAC</option>
+                        <option value="ogg">OGG</option>
+                        <option value="m4a">M4A</option>
+                    </select>
+                </label>
+                <label class="conv-family" data-quality-block hidden>
+                    <span class="conv-family__label">Qualité</span>
+                    <input id="media-quality" type="range" name="quality" min="1" max="100" value="85"
+                           class="tool-range conv-quality__range">
+                    <span class="media-quality-value" id="qualityValue">85&nbsp;%</span>
+                </label>
+                <label class="conv-family" data-bitrate-block hidden>
+                    <span class="conv-family__label">Débit</span>
+                    <select class="tool-select conv-family__select" id="audioBitrate">
+                        <option value="128">128 kbit/s</option>
+                        <option value="192" selected>192 kbit/s</option>
+                        <option value="256">256 kbit/s</option>
+                        <option value="320">320 kbit/s</option>
+                    </select>
+                </label>
+            </div>
+            <button type="button" id="convertAll" class="tool-btn">Tout convertir</button>
         </div>
+        <p class="conv-settings__hint">Choisir un format audio pour les vidéos en extrait la bande-son.</p>
+    </section>
 
-        <div class="tool-panel">
-            <h3 class="tool-panel__heading">
-                <i class="fas fa-sliders-h"></i>
-                Options de conversion
-            </h3>
-            <form id="conversionForm" class="space-y-5">
-                <div class="grid md:grid-cols-2 gap-5">
-                    <div>
-                        <label class="tool-label" for="media-format">Format de sortie</label>
-                        <select id="media-format" name="format" class="tool-select">
-                            <optgroup label="Images">
-                                <option value="jpeg">JPEG</option>
-                                <option value="png">PNG</option>
-                                <option value="webp">WEBP</option>
-                            </optgroup>
-                            <optgroup label="Vidéos">
-                                <option value="mp4">MP4</option>
-                                <option value="webm">WEBM</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="tool-label" for="media-quality">Qualité</label>
-                        <div class="flex items-center gap-3">
-                            <input id="media-quality" type="range" name="quality" min="1" max="100" value="85"
-                                   class="tool-range flex-1">
-                            <span class="media-quality-value"
-                                  id="qualityValue">85 %</span>
-                        </div>
-                    </div>
-                </div>
-                <button type="submit" class="tool-btn tool-btn--indigo tool-btn--full">
-                    <i class="fas fa-sync-alt text-xs"></i>
-                    <span>Lancer la conversion</span>
-                </button>
-            </form>
-        </div>
+    <div id="convGrid" class="conv-grid" hidden></div>
+
+    <div id="zipRow" class="conv-actions" hidden>
+        <button type="button" id="downloadZip" class="tool-btn tool-btn--ghost">
+            Tout télécharger (.zip)
+        </button>
     </div>
+
+    <p class="conv-footnote">
+        Les fichiers envoyés au convertisseur sont temporaires et supprimés après traitement.
+    </p>
 </div>
 
-<div id="loadingOverlay" class="tool-overlay hidden">
-    <div class="tool-panel max-w-sm w-full mx-4 text-center py-8">
-        <div class="inline-flex items-center justify-center w-12 h-12 mb-4">
-            <i class="fas fa-circle-notch text-2xl tool-loading-icon animate-spin"></i>
-        </div>
-        <p class="tool-state-title mb-3">Conversion en cours</p>
-        <div class="tool-progress mb-2">
-            <div id="progressBar" class="tool-progress__bar" style="width: 0%"></div>
-        </div>
-        <p id="progressText" class="tool-meta justify-center">Préparation</p>
-    </div>
-</div>
-
+<script src="{{ url_for('static', filename='vendor/jszip/jszip.min.js', v=asset_version) }}" defer></script>
 <script src="{{ url_for('static', filename='js/media.js', v=asset_version) }}" defer></script>
 {% endblock %}

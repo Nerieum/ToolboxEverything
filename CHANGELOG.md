@@ -7,6 +7,44 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [2.1.0] - 2026-08-26
+
+### Refonte du design
+
+- Accueil : lettrine dans le chapeau, initiales Fraunces en filigrane dans les
+  blocs d'ateliers (elles remplacent les icônes), titres de section en Fraunces
+  italique, répertoire des essentiels en 4 colonnes, suppression de la
+  numérotation décorative (`01`-`05`, `00 / 05`, compteurs).
+- Pages embarquées (PDF, Speedtest) : filigrane de l'initiale dans l'en-tête,
+  cadre sans barre décorative, indicateur d'état visible uniquement quand le
+  service est indisponible, crédit du moteur en légende sous le cadre.
+- Downloader : filigrane D dans l'en-tête, plateforme détectée et quota en
+  texte simple (fin des badges), choix Vidéo/Audio en deux blocs teintés à
+  filigranes, rappel légal en bas de page.
+
+### Convertisseur média
+
+- Ajout de la conversion audio : MP3, WAV, FLAC, OGG et M4A, avec débit
+  réglable (128 à 320 kbit/s).
+- Extraction de la bande-son d'une vidéo en choisissant un format audio.
+- BMP et TIFF acceptés en entrée (signatures magic bytes ajoutées).
+- Nouvelle interface : zone de dépôt unique, un format de sortie par famille
+  détectée (images, vidéos, audio), un bloc par fichier avec progression,
+  téléchargement individuel et archive `.zip` assemblée côté client.
+- Fiabilisation : les GIF et WEBP animés conservent leurs images, l'orientation
+  EXIF des photos est appliquée, la qualité est réellement transmise au WEBP,
+  les erreurs FFmpeg et Pillow sont journalisées côté serveur sans fuiter au
+  client, MP4 produit avec `+faststart`, nom de téléchargement fourni par le
+  serveur, limite portée à 30 conversions par minute.
+
+### Crédits des logiciels libres
+
+- FFmpeg, Pillow et JSZip cités sur le convertisseur, yt-dlp sur le
+  téléchargeur, Stirling PDF et LibreSpeed sous leur cadre embarqué.
+- JSZip 3.10.1 (licence MIT) vendorisé dans `app/static/vendor/jszip/`.
+
+---
+
 ## [2.0.1] - 2026-08-08
 
 ### Informations légales

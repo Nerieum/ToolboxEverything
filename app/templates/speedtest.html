@@ -5,9 +5,9 @@
 {% block content %}
 <section class="service-page service-page--speedtest">
     <header class="service-header">
+        <span class="service-header__initial" aria-hidden="true">S</span>
         <div class="service-header__copy">
-            <p class="service-header__eyebrow">05 / Réseau · LibreSpeed</p>
-            <h1 class="service-header__title">Test de débit</h1>
+            <h1 class="service-header__title">Test de <em>débit</em></h1>
             <p class="service-header__description">
                 Mesurer la ligne, pas votre patience, sans compte ni télémétrie.
             </p>
@@ -39,10 +39,6 @@
 
     {% if librespeed_configured %}
         <div class="service-frame-shell" data-service-frame-shell>
-            <div class="service-frame-bar" aria-hidden="true">
-                <span>LibreSpeed</span>
-                <span>Télémétrie désactivée</span>
-            </div>
             <div class="service-frame-viewport">
                 <div class="service-frame-loading" aria-hidden="true">
                     <span class="service-frame-loading__mark"></span>
@@ -56,6 +52,12 @@
                         referrerpolicy="no-referrer"></iframe>
             </div>
         </div>
+        <p class="service-credit">
+            Propulsé par
+            <a href="https://github.com/librespeed/speedtest"
+               target="_blank" rel="noopener noreferrer">LibreSpeed</a>,
+            logiciel libre embarqué&nbsp;: mesure sans compte ni télémétrie.
+        </p>
     {% else %}
         <section class="service-offline" aria-labelledby="speedtest-setup-title">
             <div class="service-offline__intro">
@@ -66,9 +68,9 @@
                     compte, aucune publicité et aucune donnée envoyée à un tiers.
                 </p>
                 <ul class="service-capabilities" aria-label="Mesures disponibles">
-                    <li><span>01</span> Débit descendant</li>
-                    <li><span>02</span> Débit montant</li>
-                    <li><span>03</span> Ping & gigue</li>
+                    <li>Débit descendant</li>
+                    <li>Débit montant</li>
+                    <li>Ping & gigue</li>
                 </ul>
             </div>
 

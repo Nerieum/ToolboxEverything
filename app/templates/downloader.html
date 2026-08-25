@@ -5,24 +5,18 @@
 {% block content %}
 <div class="max-w-3xl mx-auto px-4 py-10">
     <div class="tool-hero">
+        <span class="tool-hero__initial" aria-hidden="true">D</span>
         <h1 class="tool-hero__title">
-            Téléchargeur <span class="dl-accent">vidéo &amp; audio</span>
+            Téléchargeur <span class="tool-hero__accent dl-accent">vidéo &amp; audio</span>
         </h1>
         <p class="tool-hero__subtitle">
             YouTube, Vimeo, Dailymotion ou TikTok. Vidéo MP4 ou audio MP3.
         </p>
-    </div>
-
-    <!-- Bandeau d'état (plateforme détectée + quota) -->
-    <div class="dl-status" data-dl-status>
-        <span class="dl-status__platform" data-dl-platform-pill>
-            <i class="fas fa-link text-[10px] opacity-70" data-dl-platform-icon></i>
-            <span data-dl-platform-label>En attente d'un lien</span>
-        </span>
-        <span class="dl-status__quota" data-dl-quota hidden>
-            <i class="fas fa-gauge-high text-[10px] opacity-70"></i>
-            <span data-dl-quota-text></span>
-        </span>
+        <p class="tool-credit">
+            Téléchargement propulsé par
+            <a href="https://github.com/yt-dlp/yt-dlp" target="_blank" rel="noopener noreferrer">yt-dlp</a>,
+            logiciel libre.
+        </p>
     </div>
 
     <div class="tool-panel mb-5">
@@ -42,6 +36,17 @@
                 </button>
             </div>
         </form>
+
+        <!-- Plateforme détectée + quota : texte simple, pas de badge -->
+        <div class="dl-status" data-dl-status>
+            <span class="dl-status__platform" data-dl-platform-pill>
+                <i class="fas fa-link text-[10px] opacity-70" data-dl-platform-icon></i>
+                <span data-dl-platform-label>En attente d'un lien</span>
+            </span>
+            <span class="dl-status__quota" data-dl-quota hidden>
+                <span data-dl-quota-text></span>
+            </span>
+        </div>
 
         <!-- Historique récent (localStorage, jamais envoyé) -->
         <div class="dl-history" data-dl-history hidden>
@@ -96,47 +101,37 @@
             </div>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-4">
-            <div class="tool-panel">
-                <h3 class="tool-panel__heading">
-                    <i class="fas fa-video" data-dl-platform-tint></i>
-                    Vidéo
-                </h3>
-                <div class="space-y-3">
-                    <select id="videoQuality" class="tool-select text-center">
-                        <option value="highest">Meilleure qualité disponible</option>
-                        <option value="1080p">1080p</option>
-                        <option value="720p">720p</option>
-                        <option value="480p">480p</option>
-                        <option value="360p">360p</option>
-                    </select>
-                    <button type="button"
-                            class="tool-btn tool-btn--indigo tool-btn--full"
-                            data-dl-platform-cta
-                            data-dl-action="video">
-                        <i class="fas fa-download text-xs"></i>
-                        <span>Télécharger MP4</span>
-                    </button>
-                </div>
+        <div class="dl-choice">
+            <div class="dl-choice__block">
+                <span class="dl-choice__ghost" aria-hidden="true">V</span>
+                <h3 class="dl-choice__title">Vidéo</h3>
+                <select id="videoQuality" class="tool-select"
+                        aria-label="Qualité de la vidéo">
+                    <option value="highest">Meilleure qualité disponible</option>
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
+                    <option value="360p">360p</option>
+                </select>
+                <button type="button"
+                        class="tool-btn tool-btn--indigo tool-btn--full"
+                        data-dl-platform-cta
+                        data-dl-action="video">
+                    <i class="fas fa-download text-xs"></i>
+                    <span>Télécharger MP4</span>
+                </button>
             </div>
 
-            <div class="tool-panel">
-                <h3 class="tool-panel__heading">
-                    <i class="fas fa-music"></i>
-                    Audio
-                </h3>
-                <div class="space-y-3">
-                    <p class="tool-meta">
-                        <i class="fas fa-info-circle"></i>
-                        Format MP3, qualité 192 kbps
-                    </p>
-                    <button type="button"
-                            class="tool-btn tool-btn--full"
-                            data-dl-action="audio">
-                        <i class="fas fa-download text-xs"></i>
-                        <span>Télécharger MP3</span>
-                    </button>
-                </div>
+            <div class="dl-choice__block dl-choice__block--audio">
+                <span class="dl-choice__ghost" aria-hidden="true">A</span>
+                <h3 class="dl-choice__title">Audio</h3>
+                <p class="dl-choice__meta">MP3 · 192 kbit/s</p>
+                <button type="button"
+                        class="tool-btn tool-btn--ghost tool-btn--full"
+                        data-dl-action="audio">
+                    <i class="fas fa-download text-xs"></i>
+                    <span>Télécharger MP3</span>
+                </button>
             </div>
         </div>
     </div>
@@ -158,6 +153,11 @@
             <p id="progressText" class="tool-meta mt-2">Préparation</p>
         </div>
     </div>
+
+    <p class="tool-footnote">
+        Téléchargez uniquement des contenus que vous avez le droit de récupérer.
+        Les fichiers transitent par le serveur puis sont supprimés.
+    </p>
 </div>
 
 <script nonce="{{ csp_nonce }}" src="{{ url_for('static', filename='js/downloader.js', v=asset_version) }}" defer></script>

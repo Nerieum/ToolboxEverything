@@ -5,9 +5,9 @@
 {% block content %}
 <section class="service-page service-page--pdf">
     <header class="service-header">
+        <span class="service-header__initial" aria-hidden="true">P</span>
         <div class="service-header__copy">
-            <p class="service-header__eyebrow">04 / Documents · Stirling PDF</p>
-            <h1 class="service-header__title">L’atelier PDF</h1>
+            <h1 class="service-header__title">L’atelier <em>PDF</em></h1>
             <p class="service-header__description">
                 Assembler, découper, alléger, convertir ou reconnaître du texte.
             </p>
@@ -39,10 +39,6 @@
 
     {% if stirling_configured %}
         <div class="service-frame-shell" data-service-frame-shell>
-            <div class="service-frame-bar" aria-hidden="true">
-                <span>Stirling PDF</span>
-                <span>Interface embarquée</span>
-            </div>
             <div class="service-frame-viewport">
                 <div class="service-frame-loading" aria-hidden="true">
                     <span class="service-frame-loading__mark"></span>
@@ -56,6 +52,13 @@
                         referrerpolicy="no-referrer"></iframe>
             </div>
         </div>
+        <p class="service-credit">
+            Propulsé par
+            <a href="https://github.com/Stirling-Tools/Stirling-PDF"
+               target="_blank" rel="noopener noreferrer">Stirling PDF</a>,
+            logiciel libre embarqué dans votre instance&nbsp;: vos documents ne partent
+            vers aucun service tiers.
+        </p>
     {% else %}
         <section class="service-offline" aria-labelledby="pdf-setup-title">
             <div class="service-offline__intro">
@@ -66,9 +69,9 @@
                     documents vers un service public. L’instance est déjà décrite dans Compose.
                 </p>
                 <ul class="service-capabilities" aria-label="Fonctions disponibles">
-                    <li><span>01</span> Fusion & découpe</li>
-                    <li><span>02</span> Compression & conversion</li>
-                    <li><span>03</span> OCR, signatures & filigranes</li>
+                    <li>Fusion & découpe</li>
+                    <li>Compression & conversion</li>
+                    <li>OCR, signatures & filigranes</li>
                 </ul>
             </div>
 
