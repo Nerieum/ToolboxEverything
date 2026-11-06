@@ -331,9 +331,14 @@ def convert_media():
         if kind == "image":
             image_format = PIL_IMAGE_FORMATS.get(output_format)
             if not image_format:
-                return jsonify(
-                    {"error": "Une image ne peut être convertie que vers JPG, PNG, WEBP ou GIF."}
-                ), 400
+                return (
+                    jsonify(
+                        {
+                            "error": "Une image ne peut être convertie que vers JPG, PNG, WEBP ou GIF."
+                        }
+                    ),
+                    400,
+                )
 
             pil_format, output_extension = image_format
             try:
@@ -342,9 +347,12 @@ def convert_media():
             except UnidentifiedImageError:
                 return jsonify({"error": "Fichier image illisible ou corrompu."}), 400
             except Image.DecompressionBombError:
-                return jsonify(
-                    {"error": "Image refusée : dimensions démesurées une fois décompressée."}
-                ), 400
+                return (
+                    jsonify(
+                        {"error": "Image refusée : dimensions démesurées une fois décompressée."}
+                    ),
+                    400,
+                )
 
             return send_file(
                 output,
@@ -371,9 +379,12 @@ def convert_media():
                     output_format,
                     lambda src, dst: process_audio(src, dst, bitrate),
                 )
-            return jsonify(
-                {"error": "Une vidéo se convertit vers MP4 ou WEBM, ou vers un format audio."}
-            ), 400
+            return (
+                jsonify(
+                    {"error": "Une vidéo se convertit vers MP4 ou WEBM, ou vers un format audio."}
+                ),
+                400,
+            )
 
         # kind == "audio"
         if output_format in AUDIO_OUTPUT_FORMATS:
@@ -383,9 +394,10 @@ def convert_media():
                 output_format,
                 lambda src, dst: process_audio(src, dst, bitrate),
             )
-        return jsonify(
-            {"error": "Un fichier audio se convertit vers MP3, WAV, FLAC, OGG ou M4A."}
-        ), 400
+        return (
+            jsonify({"error": "Un fichier audio se convertit vers MP3, WAV, FLAC, OGG ou M4A."}),
+            400,
+        )
 
     except ConversionError as exc:
         return jsonify({"error": str(exc)}), 500

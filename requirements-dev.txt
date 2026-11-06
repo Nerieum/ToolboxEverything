@@ -1,9 +1,9 @@
 # Dépendances développement (tests, qualité code)
 -r requirements.txt
 
-pytest==9.1.1
+pytest==9.2.0
 pytest-cov==7.1.0
-black==26.5.1
-ruff==0.15.22
+black==26.10.1
+ruff==0.17.4
 bandit==1.9.4
 pip-audit==2.10.1

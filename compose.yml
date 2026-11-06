@@ -7,7 +7,7 @@
 #        docker compose up -d --build
 #
 #   2) IMAGE GHCR (prod) :
-#        export TOOLBOX_IMAGE=ghcr.io/nerieum/toolboxeverything:2.1.0
+#        export TOOLBOX_IMAGE=ghcr.io/nerieum/toolboxeverything:2.1.1
 #        docker compose pull
 #        docker compose up -d
 #
@@ -91,7 +91,7 @@ services:
   #   dans l'image, sans copie persistante sur l'hôte.
   # ---------------------------------------------------------------
   stirling-pdf:
-    image: stirlingtools/stirling-pdf:2.14.2
+    image: stirlingtools/stirling-pdf:3.3.0
     container_name: toolbox-stirling-pdf
     ports:
       - "${STIRLING_PORT:-8080}:8080"
@@ -104,6 +104,8 @@ services:
       # X-Frame-Options auto-DISABLED quand login off, OK pour iframe
       - STORAGE_ENABLED=false
       - STORAGE_SHARING_ENABLED=false
+      # Stirling 3.x : signature de groupe activée par défaut, à couper explicitement
+      - STORAGE_SIGNING_ENABLED=false
 
       # --- UI / locale ---
       - SYSTEM_DEFAULTLOCALE=fr-FR
@@ -119,6 +121,8 @@ services:
       - SYSTEM_SHOWUPDATE=false
       - SHOW_SURVEY=false
       - METRICS_ENABLED=false
+      # Stirling 3.x : suivi local d'usage des outils (recommandations), désactivé
+      - TOOLRECOMMENDATIONS_ENABLED=false
 
       # --- Nettoyage agressif des fichiers temporaires ---
       - STIRLING_TEMPFILES_DIRECTORY=/tmp/stirling-pdf
@@ -202,7 +206,7 @@ services:
   #   risque d'OOM, les clés expirées sont évincées automatiquement.
   # ---------------------------------------------------------------
   redis:
-    image: redis:8.8.0-alpine
+    image: redis:8.10.3-alpine
     container_name: toolbox-redis
     command:
       - redis-server

@@ -3,14 +3,14 @@
 > Une boîte à outils web, modulaire et sans prise de tête : télécharger une vidéo (YouTube, Vimeo, Dailymotion, TikTok), convertir un média, bidouiller un QR code ou un hash, et manipuler des PDF sans quitter son navigateur.
 
 Stack : **Flask + Tailwind**, tout en Docker, prêt à être posé derrière un reverse proxy.
-Interface **sobre et utilitaire** (v2.1.0) : couche de tokens CSS, thème clair/sombre
+Interface **sobre et utilitaire** (v2.1.1) : couche de tokens CSS, thème clair/sombre
 piloté par variables, Fraunces self-hébergée et zéro dépendance front tierce au runtime.
 
 Site public : <https://toolbox.doalo.fr>
 
 Toolbox Everything est édité et exploité par l'**association Nerieum**.
 
-![version](https://img.shields.io/badge/version-2.1.0-blue)
+![version](https://img.shields.io/badge/version-2.1.1-blue)
 ![python](https://img.shields.io/badge/python-3.12-3776AB?logo=python&logoColor=white)
 ![flask](https://img.shields.io/badge/flask-3.1-000000?logo=flask)
 ![license](https://img.shields.io/badge/license-MIT-green)
@@ -45,7 +45,7 @@ docker compose up -d --build # build local (dev / CI)
 Ou en prod avec l'image publique GHCR :
 
 ```bash
-export TOOLBOX_IMAGE=ghcr.io/nerieum/toolboxeverything:2.1.0
+export TOOLBOX_IMAGE=ghcr.io/nerieum/toolboxeverything:2.1.1
 docker compose pull && docker compose up -d
 ```
 
@@ -102,7 +102,7 @@ Tout se passe dans `.env` (copié depuis `env.example`) :
 | `LIBRESPEED_URL` | URL **interne** de LibreSpeed (healthcheck serveur) | `http://librespeed` |
 | `LIBRESPEED_PUBLIC_URL` | URL **publique** utilisée par l'iframe (navigateur) | `http://localhost:8081` |
 | `RATELIMIT_STORAGE_URI` | Backend du rate limiter (Redis en prod) | `redis://redis:6379/0` |
-| `TOOLBOX_IMAGE` | Image Docker à tirer depuis GHCR | `ghcr.io/nerieum/toolboxeverything:2.1.0` |
+| `TOOLBOX_IMAGE` | Image Docker à tirer depuis GHCR | `ghcr.io/nerieum/toolboxeverything:2.1.1` |
 | `TOOLBOX_PORT` / `STIRLING_PORT` / `LIBRESPEED_PORT` | Ports hôte exposés | `8000` / `8080` / `8081` |
 
 ### YouTube : Deno et authentification
@@ -178,7 +178,7 @@ pertinent que si l'erreur mentionne explicitement un PO Token.
 
 ## Versioning et images GHCR
 
-La version de référence est `VERSION`. Pour la v2.1.0, elle alimente :
+La version de référence est `VERSION`. Pour la v2.1.1, elle alimente :
 
 - La version affichée dans le footer et `/health`.
 - Les tags locaux générés par `make docker-build`.
@@ -187,7 +187,7 @@ La version de référence est `VERSION`. Pour la v2.1.0, elle alimente :
 Images publiées :
 
 ```bash
-ghcr.io/nerieum/toolboxeverything:2.1.0
+ghcr.io/nerieum/toolboxeverything:2.1.1
 ghcr.io/nerieum/toolboxeverything:2.0
 ghcr.io/nerieum/toolboxeverything:latest
 ```

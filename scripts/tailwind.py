@@ -12,7 +12,7 @@ import sys
 import urllib.request
 from pathlib import Path
 
-TAILWIND_VERSION = os.environ.get("TAILWIND_VERSION", "4.3.3")
+TAILWIND_VERSION = os.environ.get("TAILWIND_VERSION", "4.3.5")
 ROOT = Path(__file__).resolve().parents[1]
 BIN_DIR = ROOT / "bin"
 VERSION_FILE = BIN_DIR / ".tailwind-version"

@@ -59,7 +59,7 @@ def test_stirling_compose_has_no_persistent_storage():
     compose = (Path(__file__).parents[1] / "compose.yml").read_text(encoding="utf-8")
     stirling = compose.split("\n  stirling-pdf:\n", 1)[1].split("\n  librespeed:\n", 1)[0]
 
-    assert "image: stirlingtools/stirling-pdf:2.14.2" in stirling
+    assert "image: stirlingtools/stirling-pdf:3.3.0" in stirling
     assert "\n    volumes:" not in stirling
     assert "STORAGE_ENABLED=false" in stirling
     assert "STORAGE_SHARING_ENABLED=false" in stirling
