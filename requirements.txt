@@ -4,31 +4,32 @@
 
 # --- Flask core ---
 Flask==3.1.3
-Werkzeug==3.1.8
-python-dotenv==1.2.2
-Flask-Compress==1.24
+Werkzeug==3.1.9
+python-dotenv==1.2.4
+Flask-Compress==1.26
 
 # --- Rate limiting (protection DoS sur endpoints serveur) ---
 Flask-Limiter==4.1.1
-redis==8.0.1
+redis==8.1.0
 
 # --- Médias / images ---
-Pillow==12.3.0
+Pillow==13.0.0
 # FFmpeg est appelé directement via subprocess (cf. media_converter/routes.py),
 # pas besoin du wrapper `ffmpeg-python`.
 
 # --- Téléchargement vidéo / audio (multi-sources) ---
-yt-dlp==2026.7.4
+yt-dlp==2026.10.26
 yt-dlp-ejs==0.8.0
-filelock==3.32.2
+filelock==4.2.9
 
 # --- HTTP client (healthcheck Stirling PDF) ---
 requests==2.34.2
 
 # --- Serveur WSGI prod + compression ---
-gunicorn==26.0.0
-brotli==1.2.0
+gunicorn==26.2.0
+brotli==1.2.1
 
 # --- TLS / HTTP pinning (transitifs explicites pour la sécurité) ---
-certifi>=2026.6.17
-urllib3>=2.7.0
+# certifi >= 2026.10.19 est exigé par yt-dlp 2026.10.26.
+certifi>=2026.10.23
+urllib3>=2.8.0

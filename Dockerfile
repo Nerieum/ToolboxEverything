@@ -6,8 +6,8 @@
 #   3. css-builder  : compile Tailwind (binaire Go standalone, pas de Node)
 #   4. runtime      : image finale, zéro outil de build
 # =====================================================
-ARG TAILWIND_VERSION=4.3.3
-ARG DENO_VERSION=2.9.5
+ARG TAILWIND_VERSION=4.3.5
+ARG DENO_VERSION=2.9.8
 
 # -----------------------------------------------------
 # 1) Runtime JavaScript pour les challenges YouTube EJS

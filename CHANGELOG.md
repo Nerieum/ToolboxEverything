@@ -7,6 +7,26 @@ et ce projet adhère au [Versionnage Sémantique](https://semver.org/lang/fr/).
 
 ---
 
+## [2.1.1] - 2026-11-06
+
+### Dépendances
+
+- **Stirling PDF 2.14.2 -> 3.3.0** (version majeure). Le mode amnésique est
+  conservé et deux défauts de la 3.x sont coupés explicitement :
+  `STORAGE_SIGNING_ENABLED=false` (signature de groupe) et
+  `TOOLRECOMMENDATIONS_ENABLED=false` (suivi local d'usage des outils).
+- **yt-dlp 2026.7.4 -> 2026.10.26**, Deno 2.9.5 -> 2.9.8 (minimum requis par
+  cette version), `certifi>=2026.10.23`, `yt-dlp-ejs` inchangé (0.8.0).
+- Pillow 12.3.0 -> 13.0.0, filelock 3.32.2 -> 4.2.9, redis-py 8.0.1 -> 8.1.0,
+  gunicorn 26.0.0 -> 26.2.0, Werkzeug 3.1.9, Flask-Compress 1.26,
+  python-dotenv 1.2.4, brotli 1.2.1, urllib3 2.8.0.
+- Image Redis 8.8.0 -> 8.10.3, Tailwind CLI 4.3.3 -> 4.3.5.
+- Outils de dev : pytest 9.2.0, black 26.10.1 (un fichier reformaté), ruff 0.17.4.
+- GitHub Actions : setup-python v7, setup-buildx 4.4.1, login 4.8.0,
+  build-push 7.4.0.
+
+---
+
 ## [2.1.0] - 2026-08-26
 
 ### Refonte du design
